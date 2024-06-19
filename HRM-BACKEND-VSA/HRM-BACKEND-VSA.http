@@ -1,0 +1,6 @@
+@HRM_BACKEND_VSA_HostAddress = http://localhost:5132
+
+GET {{HRM_BACKEND_VSA_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
