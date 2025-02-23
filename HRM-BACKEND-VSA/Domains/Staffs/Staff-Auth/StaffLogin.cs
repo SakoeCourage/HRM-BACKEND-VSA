@@ -2,6 +2,7 @@
 using Carter;
 using FluentValidation;
 using HRM_BACKEND_VSA.Database;
+using HRM_BACKEND_VSA.Extensions;
 using HRM_BACKEND_VSA.Providers;
 using HRM_BACKEND_VSA.Shared;
 using MediatR;
@@ -97,6 +98,7 @@ public class MapStaffLoginEndpoint : ICarterModule
         .WithMetadata(new ProducesResponseTypeAttribute(typeof(StaffLoginResponse), StatusCodes.Status200OK))
         .WithMetadata(new ProducesResponseTypeAttribute(typeof(Error), StatusCodes.Status422UnprocessableEntity))
         .WithTags("Authentication-Staff")
+        .WithGroupName(SwaggerDoc.SwaggerEndpointDefintions.HRAuthService)
           ;
     }
 }

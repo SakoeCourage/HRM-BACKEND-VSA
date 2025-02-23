@@ -1,5 +1,6 @@
 ﻿using Carter;
 using HRM_BACKEND_VSA.Database;
+using HRM_BACKEND_VSA.Extensions;
 using HRM_BACKEND_VSA.Model.SMS;
 using HRM_BACKEND_VSA.Shared;
 using MediatR;
@@ -67,6 +68,7 @@ public class MapGetSMSCampaignEndpoint : ICarterModule
         })
             .WithMetadata(new ProducesResponseTypeAttribute(typeof(SMSCampaignHistory), StatusCodes.Status200OK))
             .WithMetadata(new ProducesResponseTypeAttribute(typeof(Error), StatusCodes.Status401Unauthorized))
+            .WithGroupName(SwaggerDoc.SwaggerEndpointDefintions.SMSService)
             .WithTags("SMS-Campaign");
 
 

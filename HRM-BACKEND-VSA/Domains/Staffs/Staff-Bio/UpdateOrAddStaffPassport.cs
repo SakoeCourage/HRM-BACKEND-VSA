@@ -1,6 +1,7 @@
 ﻿using Carter;
 using FluentValidation;
 using HRM_BACKEND_VSA.Database;
+using HRM_BACKEND_VSA.Extensions;
 using HRM_BACKEND_VSA.Serivices.ImageKit;
 using HRM_BACKEND_VSA.Shared;
 using MediatR;
@@ -93,7 +94,9 @@ public class MapUpdateOrAddStaffPassportEnpoint : ICarterModule
 
         }).WithTags("Staff-Bio")
               .WithMetadata(new ProducesResponseTypeAttribute(StatusCodes.Status204NoContent))
-              .WithMetadata(new ProducesResponseTypeAttribute(typeof(Error), StatusCodes.Status400BadRequest));
+              .WithMetadata(new ProducesResponseTypeAttribute(typeof(Error), StatusCodes.Status400BadRequest))
+              .WithGroupName(SwaggerDoc.SwaggerEndpointDefintions.Planning)
+              ;
     }
 }
 

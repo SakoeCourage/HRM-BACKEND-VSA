@@ -1,4 +1,5 @@
 ﻿using Carter;
+using HRM_BACKEND_VSA.Extensions;
 using HRM_BACKEND_VSA.Serivices.Mail_Service;
 using HRM_BACKEND_VSA.Shared;
 using MediatR;
@@ -64,6 +65,7 @@ public class MapTextMaillEndpoint : ICarterModule
             }
             return Results.BadRequest();
         }).WithTags("Test Mail")
+        .WithGroupName(SwaggerDoc.SwaggerEndpointDefintions.TestFeature)
         ;
     }
 }

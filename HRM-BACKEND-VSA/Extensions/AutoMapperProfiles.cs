@@ -16,7 +16,6 @@ namespace HRM_BACKEND_VSA.Extensions
     {
         public AutoMapperProfiles()
         {
-
             CreateMap<EditSMSTemplateRequest, NewSMSTemplateRequest>().ReverseMap();
             CreateMap<ApplicantLoginResponse, Applicant>().ReverseMap();
             CreateMap<ApplicantBioData, AddBioDataRequest>().ReverseMap();

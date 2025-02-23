@@ -1,5 +1,6 @@
 ﻿using Carter;
 using HRM_BACKEND_VSA.Database;
+using HRM_BACKEND_VSA.Extensions;
 using HRM_BACKEND_VSA.Shared;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -66,6 +67,7 @@ public class GetDepartmentByIdEndpoint : ICarterModule
         })
             .WithMetadata(new ProducesResponseTypeAttribute(typeof(Error), StatusCodes.Status400BadRequest))
             .WithMetadata(new ProducesResponseTypeAttribute(typeof(HRM_BACKEND_VSA.Entities.Department), StatusCodes.Status200OK))
+            .WithGroupName(SwaggerDoc.SwaggerEndpointDefintions.Setup)
             .WithTags("Setup-Department");
     }
 }

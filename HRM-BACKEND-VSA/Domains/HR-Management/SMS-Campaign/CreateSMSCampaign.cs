@@ -10,6 +10,7 @@ using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
+using HRM_BACKEND_VSA.Extensions;
 using static HRM_BACKEND_VSA.Contracts.SMSContracts;
 using static HRM_BACKEND_VSA.Features.SMS_Campaign.CreateSMSCampaign;
 
@@ -19,10 +20,8 @@ namespace HRM_BACKEND_VSA.Features.SMS_Campaign
     {
         public class CreateSMSCampaignRequest : IRequest<Result<string>>
         {
-            [Required]
-            public string campaingName { get; set; }
-            [Required]
-            public Guid? smsTemplateId { get; set; }
+            [Required] public string campaingName { get; set; }
+            [Required] public Guid? smsTemplateId { get; set; }
             public IFormFile? templateFile { get; set; }
             public string? message { get; set; }
             public Guid[]? staffIds { get; set; }
@@ -35,31 +34,31 @@ namespace HRM_BACKEND_VSA.Features.SMS_Campaign
         public class Validator : AbstractValidator<CreateSMSCampaignRequest>
         {
             private readonly IServiceScopeFactory _scopeFactory;
+
             public Validator(IServiceScopeFactory scopeFactory)
             {
                 _scopeFactory = scopeFactory;
                 RuleFor(x => x.campaingName)
-                 .NotEmpty()
-                 .MustAsync(async (name, cancellationToken) =>
-                 {
-                     using (var scope = _scopeFactory.CreateScope())
-                     {
-                         var dbContext = scope.ServiceProvider.GetRequiredService<HRMDBContext>();
-                         bool exist = await dbContext
-                         .SMSCampaignHistory
-                         .AnyAsync(e => e.campaignName.ToLower() == name.Trim().ToLower());
-                         return !exist;
-                     }
-
-                 })
-                 .WithMessage("Campaign Name Already Exist")
-                 ;
+                    .NotEmpty()
+                    .MustAsync(async (name, cancellationToken) =>
+                    {
+                        using (var scope = _scopeFactory.CreateScope())
+                        {
+                            var dbContext = scope.ServiceProvider.GetRequiredService<HRMDBContext>();
+                            bool exist = await dbContext
+                                .SMSCampaignHistory
+                                .AnyAsync(e => e.campaignName.ToLower() == name.Trim().ToLower());
+                            return !exist;
+                        }
+                    })
+                    .WithMessage("Campaign Name Already Exist")
+                    ;
                 RuleFor(c => c.message)
-                     .Must((model, message) =>
-                     {
-                         return (model.smsTemplateId == null && message == String.Empty) ? false : true;
-                     })
-                     .WithMessage("Message Is Required");
+                    .Must((model, message) =>
+                    {
+                        return (model.smsTemplateId == null && message == String.Empty) ? false : true;
+                    })
+                    .WithMessage("Message Is Required");
             }
         }
 
@@ -70,7 +69,9 @@ namespace HRM_BACKEND_VSA.Features.SMS_Campaign
             private readonly SMSService _smsService;
             private readonly HRMStaffDBContext _staffDbContext;
             private readonly MailService _mailService;
-            public Handler(HRMDBContext dbContext, IValidator<CreateSMSCampaignRequest> validator, SMSService smsService, HRMStaffDBContext staffDbContext, MailService mailService)
+
+            public Handler(HRMDBContext dbContext, IValidator<CreateSMSCampaignRequest> validator,
+                SMSService smsService, HRMStaffDBContext staffDbContext, MailService mailService)
             {
                 _dbContext = dbContext;
                 _validator = validator;
@@ -79,7 +80,8 @@ namespace HRM_BACKEND_VSA.Features.SMS_Campaign
                 _mailService = mailService;
             }
 
-            public async Task<Result<string>> Handle(CreateSMSCampaignRequest request, CancellationToken cancellationToken)
+            public async Task<Result<string>> Handle(CreateSMSCampaignRequest request,
+                CancellationToken cancellationToken)
             {
                 var validationResponse = await _validator.ValidateAsync(request, cancellationToken);
 
@@ -95,7 +97,6 @@ namespace HRM_BACKEND_VSA.Features.SMS_Campaign
                     campaingName = request.campaingName,
                     message = request.message,
                     frequency = request.frequency
-
                 };
 
                 // With File Request
@@ -112,11 +113,13 @@ namespace HRM_BACKEND_VSA.Features.SMS_Campaign
                 {
                     if (request.templateFile is not null)
                     {
-                        await new SMSExtension(_staffDbContext, _dbContext, _smsService, _mailService).HandleCampaignWithTemplateFile(filtemplateDto);
+                        await new SMSExtension(_staffDbContext, _dbContext, _smsService, _mailService)
+                            .HandleCampaignWithTemplateFile(filtemplateDto);
                         return Shared.Result.Success<string>("Batch SMS Dispatched");
                     }
 
                     #region
+
                     // Handle Staff SMS Request
                     if (request.staffIds is not null)
                     {
@@ -124,7 +127,8 @@ namespace HRM_BACKEND_VSA.Features.SMS_Campaign
                         {
                             try
                             {
-                                await new SMSRequestHandlers(_dbContext, _staffDbContext, _smsService, _mailService).handleOnStaffSMSRequest(request.staffIds, NoFileRequest);
+                                await new SMSRequestHandlers(_dbContext, _staffDbContext, _smsService, _mailService)
+                                    .handleOnStaffSMSRequest(request.staffIds, NoFileRequest);
                                 await transaction.CommitAsync();
                                 return Shared.Result.Success<string>("Batch SMS Dispatched");
                             }
@@ -135,10 +139,12 @@ namespace HRM_BACKEND_VSA.Features.SMS_Campaign
                             }
                         }
                     }
+
                     #endregion
 
 
                     #region
+
                     // Handle Unit SMS Request
                     if (request.unitId is not null)
                     {
@@ -146,7 +152,8 @@ namespace HRM_BACKEND_VSA.Features.SMS_Campaign
                         {
                             try
                             {
-                                await new SMSRequestHandlers(_dbContext, _staffDbContext, _smsService, _mailService).handleOnUnitSMSRequest(request.unitId, NoFileRequest);
+                                await new SMSRequestHandlers(_dbContext, _staffDbContext, _smsService, _mailService)
+                                    .handleOnUnitSMSRequest(request.unitId, NoFileRequest);
                                 await transaction.CommitAsync();
                                 return Shared.Result.Success<string>("Batch SMS Dispatched");
                             }
@@ -157,9 +164,11 @@ namespace HRM_BACKEND_VSA.Features.SMS_Campaign
                             }
                         }
                     }
+
                     #endregion
 
                     #region
+
                     // Handle Unit SMS Request
                     if (request.departmentId is not null)
                     {
@@ -167,7 +176,8 @@ namespace HRM_BACKEND_VSA.Features.SMS_Campaign
                         {
                             try
                             {
-                                await new SMSRequestHandlers(_dbContext, _staffDbContext, _smsService, _mailService).handleOnDepartmentSMSRequest(request.departmentId, NoFileRequest);
+                                await new SMSRequestHandlers(_dbContext, _staffDbContext, _smsService, _mailService)
+                                    .handleOnDepartmentSMSRequest(request.departmentId, NoFileRequest);
                                 await transaction.CommitAsync();
                                 return Shared.Result.Success<string>("Batch SMS Dispatched");
                             }
@@ -178,15 +188,15 @@ namespace HRM_BACKEND_VSA.Features.SMS_Campaign
                             }
                         }
                     }
-                    #endregion 
 
+                    #endregion
                 }
                 catch (Exception ex)
                 {
                     return Shared.Result.Failure<string>(Error.BadRequest(ex.Message));
                 }
-                return Shared.Result.Success<string>("Batch SMS Dispatched");
 
+                return Shared.Result.Success<string>("Batch SMS Dispatched");
             }
         }
     }
@@ -197,41 +207,41 @@ public class MapCreateSMSEndpoint : ICarterModule
     public void AddRoutes(IEndpointRouteBuilder app)
     {
         app.MapPost("api/sms-campaign/create", async (ISender sender,
-            [FromForm] string campaingName,
-            [FromForm] string? smsTemplateId,
-            [FromForm] IFormFile? templateFile,
-            [FromForm] string? message,
-            [FromForm] string? frequency,
-            [FromForm] Guid[]? staffIds,
-            [FromForm] string? directorateId,
-            [FromForm] string? departmentId,
-            [FromForm] string? unitId
+                [FromForm] string campaingName,
+                [FromForm] string? smsTemplateId,
+                [FromForm] IFormFile? templateFile,
+                [FromForm] string? message,
+                [FromForm] string? frequency,
+                [FromForm] Guid[]? staffIds,
+                [FromForm] string? directorateId,
+                [FromForm] string? departmentId,
+                [FromForm] string? unitId
             ) =>
-        {
-            var response = await sender.Send(
-                new CreateSMSCampaignRequest
-                {
-                    campaingName = campaingName,
-                    smsTemplateId = String.IsNullOrWhiteSpace(smsTemplateId) ? null : Guid.Parse(smsTemplateId),
-                    templateFile = templateFile,
-                    message = message,
-                    frequency = frequency,
-                    staffIds = staffIds,
-                    directorateId = null,
-                    unitId = null
-                }
-                );
-            if (response.IsFailure)
             {
-                return Results.UnprocessableEntity(response.Error);
-            }
+                var response = await sender.Send(
+                    new CreateSMSCampaignRequest
+                    {
+                        campaingName = campaingName,
+                        smsTemplateId = String.IsNullOrWhiteSpace(smsTemplateId) ? null : Guid.Parse(smsTemplateId),
+                        templateFile = templateFile,
+                        message = message,
+                        frequency = frequency,
+                        staffIds = staffIds,
+                        directorateId = null,
+                        unitId = null
+                    }
+                );
+                if (response.IsFailure)
+                {
+                    return Results.UnprocessableEntity(response.Error);
+                }
 
-            return Results.Ok(response.Value);
-
-        }).WithTags("SMS-Campaign")
-              .WithMetadata(new ProducesResponseTypeAttribute(StatusCodes.Status200OK))
-              .WithMetadata(new ProducesResponseTypeAttribute(typeof(Error), StatusCodes.Status400BadRequest))
-              .DisableAntiforgery();
+                return Results.Ok(response.Value);
+            }).WithTags("SMS-Campaign")
+            .WithMetadata(new ProducesResponseTypeAttribute(StatusCodes.Status200OK))
+            .WithMetadata(new ProducesResponseTypeAttribute(typeof(Error), StatusCodes.Status400BadRequest))
+            .WithGroupName(SwaggerDoc.SwaggerEndpointDefintions.SMSService)
+            .DisableAntiforgery();
         ;
     }
 }

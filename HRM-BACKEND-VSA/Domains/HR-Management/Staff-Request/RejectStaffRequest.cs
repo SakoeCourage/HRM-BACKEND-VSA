@@ -1,6 +1,7 @@
 ﻿using Carter;
 using HRM_BACKEND_VSA.Database;
 using HRM_BACKEND_VSA.Domains.Staffs.Services;
+using HRM_BACKEND_VSA.Extensions;
 using HRM_BACKEND_VSA.Providers;
 using HRM_BACKEND_VSA.Shared;
 using MediatR;
@@ -94,6 +95,8 @@ public class MapRejectStaffRequestEndpoint : ICarterModule
                  return Results.Ok(response.Value);
              }
              return Results.BadRequest();
-         }).WithTags("Staff-Request");
+         }).WithTags("Staff-Request")
+            .WithGroupName(SwaggerDoc.SwaggerEndpointDefintions.StaffRequestHandler)
+            ;
     }
 }

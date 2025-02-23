@@ -1,5 +1,6 @@
 ﻿using Carter;
 using HRM_BACKEND_VSA.Database;
+using HRM_BACKEND_VSA.Extensions;
 using HRM_BACKEND_VSA.Shared;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -56,6 +57,7 @@ public class MapGetUserEndPoint : ICarterModule
             return Results.BadRequest();
         }).WithTags("Manage-User")
         .WithMetadata(new ProducesResponseTypeAttribute(typeof(HRM_BACKEND_VSA.Entities.User), StatusCodes.Status200OK))
+        .WithGroupName(SwaggerDoc.SwaggerEndpointDefintions.UserManagement)
         ;
     }
 }

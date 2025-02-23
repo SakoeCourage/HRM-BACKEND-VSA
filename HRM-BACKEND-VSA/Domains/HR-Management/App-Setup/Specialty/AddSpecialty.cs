@@ -6,6 +6,7 @@ using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Data.Common;
+using HRM_BACKEND_VSA.Extensions;
 using static HRM_BACKEND_VSA.Domains.HR_Management.App_Setup.Specialty.AddSpecialty;
 
 namespace HRM_BACKEND_VSA.Domains.HR_Management.App_Setup.Specialty
@@ -108,7 +109,7 @@ public class MappAddSpecialityRequest : ICarterModule
         }).WithTags("Setup-Staff-Speciality")
               .WithMetadata(new ProducesResponseTypeAttribute(typeof(Guid), StatusCodes.Status200OK))
               .WithMetadata(new ProducesResponseTypeAttribute(typeof(Error), StatusCodes.Status400BadRequest))
-
+              .WithGroupName(SwaggerDoc.SwaggerEndpointDefintions.Setup)
           ;
     }
 }

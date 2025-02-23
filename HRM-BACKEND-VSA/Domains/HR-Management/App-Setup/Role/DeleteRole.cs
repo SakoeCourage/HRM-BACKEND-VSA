@@ -1,5 +1,6 @@
 ﻿using Carter;
 using HRM_BACKEND_VSA.Database;
+using HRM_BACKEND_VSA.Extensions;
 using HRM_BACKEND_VSA.Features.Role;
 using HRM_BACKEND_VSA.Shared;
 using MediatR;
@@ -71,6 +72,7 @@ public class MapDeleteUserEndpoint : ICarterModule
         }).WithTags("Setup-Role")
               .WithMetadata(new ProducesResponseTypeAttribute(StatusCodes.Status200OK))
               .WithMetadata(new ProducesResponseTypeAttribute(typeof(Error), StatusCodes.Status400BadRequest))
+              .WithGroupName(SwaggerDoc.SwaggerEndpointDefintions.Setup)
 
         ;
     }

@@ -1,5 +1,6 @@
 ﻿using Carter;
 using HRM_BACKEND_VSA.Database;
+using HRM_BACKEND_VSA.Extensions;
 using HRM_BACKEND_VSA.Shared;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -55,6 +56,7 @@ public class DeleteDepartmentEndpoint : ICarterModule
         }).WithTags("Setup-Department")
               .WithMetadata(new ProducesResponseTypeAttribute(StatusCodes.Status204NoContent))
               .WithMetadata(new ProducesResponseTypeAttribute(typeof(Error), StatusCodes.Status400BadRequest))
+              .WithGroupName(SwaggerDoc.SwaggerEndpointDefintions.Setup)
           ;
     }
 }

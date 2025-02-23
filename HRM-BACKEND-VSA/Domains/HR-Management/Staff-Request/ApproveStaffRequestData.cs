@@ -15,7 +15,6 @@ namespace HRM_BACKEND_VSA.Domains.HR_Management.Staff_Request
         public class ApproveStaffRequest : IRequest<Shared.Result<object>>
         {
             public Guid id { get; set; }
-
         }
 
         internal sealed class Handler : IRequestHandler<ApproveStaffRequest, Shared.Result<object>>
@@ -25,7 +24,8 @@ namespace HRM_BACKEND_VSA.Domains.HR_Management.Staff_Request
             private readonly RequestService _requestService;
             private readonly Authprovider _authProvider;
 
-            public Handler(HRMDBContext dbContext, HRMStaffDBContext staffdbContext, RequestService requestService, Authprovider authProvider)
+            public Handler(HRMDBContext dbContext, HRMStaffDBContext staffdbContext, RequestService requestService,
+                Authprovider authProvider)
             {
                 _dbContext = dbContext;
                 _staffdbContext = staffdbContext;
@@ -35,7 +35,6 @@ namespace HRM_BACKEND_VSA.Domains.HR_Management.Staff_Request
 
             public async Task<Result<object>> Handle(ApproveStaffRequest request, CancellationToken cancellationToken)
             {
-
                 var authUser = await _authProvider.GetAuthUser();
 
                 if (authUser is null)
@@ -59,14 +58,14 @@ namespace HRM_BACKEND_VSA.Domains.HR_Management.Staff_Request
 
                 try
                 {
-                    var response = await service.OnRequestAccepted(requestRecord.RequestDetailPolymorphicId, requestRecord);
+                    var response =
+                        await service.OnRequestAccepted(requestRecord.RequestDetailPolymorphicId, requestRecord);
                     return Shared.Result.Success<object>(response);
                 }
                 catch (Exception ex)
                 {
                     return Shared.Result.Failure<object>(Error.BadRequest(ex.Message));
                 }
-
             }
         }
     }
@@ -77,22 +76,22 @@ public class MapApproveStaffRequestEndpoint : ICarterModule
     public void AddRoutes(IEndpointRouteBuilder app)
     {
         app.MapPost("api/staff-request/approve",
-         [Authorize(Policy = AuthorizationDecisionType.HRMUser)]
-        async (ISender sender, ApproveStaffRequest request) =>
-        {
-            var response = await sender.Send(request);
-
-            if (response.IsFailure)
+            [Authorize(Policy = AuthorizationDecisionType.HRMUser)]
+            async (ISender sender, ApproveStaffRequest request) =>
             {
-                return Results.BadRequest(response.Error);
-            }
+                var response = await sender.Send(request);
 
-            if (response.IsSuccess)
-            {
-                return Results.Ok(response.Value);
-            }
-            return Results.BadRequest();
-        }).WithTags("Staff-Request");
+                if (response.IsFailure)
+                {
+                    return Results.BadRequest(response.Error);
+                }
+
+                if (response.IsSuccess)
+                {
+                    return Results.Ok(response.Value);
+                }
+
+                return Results.BadRequest();
+            }).WithTags("Staff-Request");
     }
 }
-

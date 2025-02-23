@@ -1,5 +1,6 @@
 ﻿using Carter;
 using HRM_BACKEND_VSA.Entities.Applicant;
+using HRM_BACKEND_VSA.Extensions;
 using HRM_BACKEND_VSA.Providers;
 using HRM_BACKEND_VSA.Shared;
 using MediatR;
@@ -63,6 +64,7 @@ public class MapAuthApplicantEndpoint : ICarterModule
         .WithMetadata(new ProducesResponseTypeAttribute(typeof(Applicant), StatusCodes.Status200OK))
         .WithMetadata(new ProducesResponseTypeAttribute(typeof(Error), StatusCodes.Status422UnprocessableEntity))
         .WithTags("Authentication Applicant")
+        .WithGroupName(SwaggerDoc.SwaggerEndpointDefintions.ApplicantService)
           ;
     }
 }

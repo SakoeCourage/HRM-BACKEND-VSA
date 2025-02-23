@@ -1,5 +1,6 @@
 ﻿using Carter;
 using HRM_BACKEND_VSA.Database;
+using HRM_BACKEND_VSA.Extensions;
 using HRM_BACKEND_VSA.Shared;
 using HRM_BACKEND_VSA.Utilities;
 using MediatR;
@@ -68,6 +69,8 @@ public class MapGetClubListEnpoint : ICarterModule
             return Results.BadRequest("Empty Result");
         }).WithMetadata(new ProducesResponseTypeAttribute(typeof(Error), StatusCodes.Status400BadRequest))
           .WithMetadata(new ProducesResponseTypeAttribute(typeof(Paginator.PaginatedData<HRM_BACKEND_VSA.Entities.User>), StatusCodes.Status200OK))
-          .WithTags("Manage-User");
+          .WithTags("Manage-User")
+          .WithGroupName(SwaggerDoc.SwaggerEndpointDefintions.UserManagement)
+          ;
     }
 }

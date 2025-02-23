@@ -3,6 +3,7 @@ using FluentValidation;
 using HRM_BACKEND_VSA.Contracts;
 using HRM_BACKEND_VSA.Database;
 using HRM_BACKEND_VSA.Entities.HR_Manag;
+using HRM_BACKEND_VSA.Extensions;
 using HRM_BACKEND_VSA.Serivices.Mail_Service;
 using HRM_BACKEND_VSA.Services.SMS_Service;
 using HRM_BACKEND_VSA.Shared;
@@ -148,6 +149,8 @@ public class MapCreateUserEndPoint : ICarterModule
             }
 
             return Results.BadRequest();
-        }).WithTags("Manage-User");
+        }).WithTags("Manage-User")
+        .WithGroupName(SwaggerDoc.SwaggerEndpointDefintions.UserManagement)
+            ;
     }
 }

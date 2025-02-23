@@ -1,6 +1,7 @@
 ﻿using Carter;
 using HRM_BACKEND_VSA.Database;
 using HRM_BACKEND_VSA.Entities;
+using HRM_BACKEND_VSA.Extensions;
 using HRM_BACKEND_VSA.Features.Role;
 using HRM_BACKEND_VSA.Shared;
 using MediatR;
@@ -69,6 +70,7 @@ public class GetRoleEndpoint : ICarterModule
             .WithMetadata(new ProducesResponseTypeAttribute(typeof(Error), StatusCodes.Status400BadRequest))
             .WithMetadata(new ProducesResponseTypeAttribute(typeof(Role), StatusCodes.Status200OK))
             .WithTags("Setup-Role")
+            .WithGroupName(SwaggerDoc.SwaggerEndpointDefintions.Setup)
             ;
     }
 }

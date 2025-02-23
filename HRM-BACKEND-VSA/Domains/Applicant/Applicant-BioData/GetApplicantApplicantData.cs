@@ -3,6 +3,7 @@ using Carter;
 using FluentValidation;
 using HRM_BACKEND_VSA.Database;
 using HRM_BACKEND_VSA.Entities.Applicant;
+using HRM_BACKEND_VSA.Extensions;
 using HRM_BACKEND_VSA.Providers;
 using HRM_BACKEND_VSA.Shared;
 using MediatR;
@@ -76,6 +77,7 @@ public class MappGetApplicantApplicantDataEndpoint : ICarterModule
         .WithMetadata(new ProducesResponseTypeAttribute(typeof(ApplicantBioData), StatusCodes.Status200OK))
         .WithTags("Applicant Bio Data")
         .DisableAntiforgery()
+        .WithGroupName(SwaggerDoc.SwaggerEndpointDefintions.ApplicantService)
         ;
     }
 }

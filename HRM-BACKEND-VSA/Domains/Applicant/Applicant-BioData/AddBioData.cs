@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
+using HRM_BACKEND_VSA.Extensions;
 using static HRM_BACKEND_VSA.Domains.Applicant.Applicant_BioData.AddBioData;
 
 namespace HRM_BACKEND_VSA.Domains.Applicant.Applicant_BioData
@@ -218,6 +219,7 @@ public class MappAddBioDataEndpoint : ICarterModule
         .WithMetadata(new ProducesResponseTypeAttribute(typeof(Guid), StatusCodes.Status200OK))
         .WithTags("Applicant Bio Data")
         .DisableAntiforgery()
+        .WithGroupName(SwaggerDoc.SwaggerEndpointDefintions.ApplicantService)
         ;
     }
 }

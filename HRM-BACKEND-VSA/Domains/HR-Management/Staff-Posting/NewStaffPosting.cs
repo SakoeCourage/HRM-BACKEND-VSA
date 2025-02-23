@@ -4,6 +4,7 @@ using FluentValidation;
 using HRM_BACKEND_VSA.Contracts;
 using HRM_BACKEND_VSA.Database;
 using HRM_BACKEND_VSA.Entities.Staff;
+using HRM_BACKEND_VSA.Extensions;
 using HRM_BACKEND_VSA.Serivices.Mail_Service;
 using HRM_BACKEND_VSA.Shared;
 using MediatR;
@@ -192,6 +193,8 @@ public class MapNewStaffPostingEndpoint : ICarterModule
                 return Results.UnprocessableEntity(response.Error);
             }
             return Results.BadRequest();
-        }).WithTags("Staff-Request");
+        }).WithTags("Staff-Request")
+        .WithGroupName(SwaggerDoc.SwaggerEndpointDefintions.PostingAndTransfer)
+            ;
     }
 }

@@ -1,5 +1,6 @@
 ﻿using Carter;
 using HRM_BACKEND_VSA.Database;
+using HRM_BACKEND_VSA.Extensions;
 using HRM_BACKEND_VSA.Shared;
 using HRM_BACKEND_VSA.Utilities;
 using MediatR;
@@ -76,6 +77,7 @@ public class MapGetUnitFromDepIdEndpoint : ICarterModule
             return Results.BadRequest("Empty Result");
         }).WithMetadata(new ProducesResponseTypeAttribute(typeof(Error), StatusCodes.Status400BadRequest))
          .WithMetadata(new ProducesResponseTypeAttribute(typeof(Paginator.PaginatedData<HRM_BACKEND_VSA.Entities.Unit>), StatusCodes.Status200OK))
+         .WithGroupName(SwaggerDoc.SwaggerEndpointDefintions.Setup)
          .WithTags("Setup-Department");
     }
 }

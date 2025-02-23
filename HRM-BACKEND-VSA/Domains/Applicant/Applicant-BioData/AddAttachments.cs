@@ -4,6 +4,7 @@ using FluentValidation;
 using HRM_BACKEND_VSA.Contracts;
 using HRM_BACKEND_VSA.Database;
 using HRM_BACKEND_VSA.Domains.Staffs.Services;
+using HRM_BACKEND_VSA.Extensions;
 using HRM_BACKEND_VSA.Providers;
 using HRM_BACKEND_VSA.Serivices.ImageKit;
 using HRM_BACKEND_VSA.Shared;
@@ -167,6 +168,7 @@ public class MapAddApplicantAttachmentEndpoint : ICarterModule
         }).WithMetadata(new ProducesResponseTypeAttribute(typeof(Error), StatusCodes.Status422UnprocessableEntity))
         .WithMetadata(new ProducesResponseTypeAttribute(typeof(Guid), StatusCodes.Status204NoContent))
         .WithTags("Applicant Bio Data")
+        .WithGroupName(SwaggerDoc.SwaggerEndpointDefintions.ApplicantService)
         .DisableAntiforgery();
         ;
     }

@@ -1,6 +1,7 @@
 ﻿using Carter;
 using HRM_BACKEND_VSA.Database;
 using HRM_BACKEND_VSA.Entities;
+using HRM_BACKEND_VSA.Extensions;
 using HRM_BACKEND_VSA.Features.Permission;
 using HRM_BACKEND_VSA.Shared;
 using HRM_BACKEND_VSA.Utilities;
@@ -78,6 +79,7 @@ public class getPermissionsEndpoint : ICarterModule
             .WithMetadata(new ProducesResponseTypeAttribute(typeof(Error), StatusCodes.Status400BadRequest))
             .WithMetadata(new ProducesResponseTypeAttribute(typeof(Paginator.PaginatedData<Permission>), StatusCodes.Status200OK))
             .WithTags("Setup-Permission")
+            .WithGroupName(SwaggerDoc.SwaggerEndpointDefintions.Setup)
             ;
     }
 }

@@ -1,6 +1,7 @@
 ﻿using Carter;
 using FluentValidation;
 using HRM_BACKEND_VSA.Database;
+using HRM_BACKEND_VSA.Extensions;
 using HRM_BACKEND_VSA.Shared;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -110,6 +111,7 @@ public class MapUpdateDepartmentEndpoint : ICarterModule
 
         }).WithTags("Setup-Department")
               .WithMetadata(new ProducesResponseTypeAttribute(StatusCodes.Status204NoContent))
+              .WithGroupName(SwaggerDoc.SwaggerEndpointDefintions.Setup)
               .WithMetadata(new ProducesResponseTypeAttribute(typeof(Error), StatusCodes.Status400BadRequest));
     }
 }

@@ -1,6 +1,7 @@
 ﻿using Carter;
 using FluentValidation;
 using HRM_BACKEND_VSA.Database;
+using HRM_BACKEND_VSA.Extensions;
 using HRM_BACKEND_VSA.Shared;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -105,6 +106,8 @@ public class MapEditSMSTemplateEndpoint : ICarterModule
         })
         .WithMetadata(new ProducesResponseTypeAttribute(typeof(Error), StatusCodes.Status422UnprocessableEntity))
         .WithMetadata(new ProducesResponseTypeAttribute(typeof(Guid), StatusCodes.Status200OK))
-        .WithTags("Setup-SMS Template");
+        .WithTags("Setup-SMS Template")
+        .WithGroupName(SwaggerDoc.SwaggerEndpointDefintions.SMSService)
+        ;
     }
 }

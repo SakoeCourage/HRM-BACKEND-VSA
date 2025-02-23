@@ -1,5 +1,6 @@
 ﻿using Carter;
 using HRM_BACKEND_VSA.Entities.Staff;
+using HRM_BACKEND_VSA.Extensions;
 using HRM_BACKEND_VSA.Providers;
 using HRM_BACKEND_VSA.Shared;
 using MediatR;
@@ -61,6 +62,8 @@ public class MapGetAuthStaffEndpoint : ICarterModule
          })
         .WithMetadata(new ProducesResponseTypeAttribute(typeof(Staff), StatusCodes.Status200OK))
         .WithMetadata(new ProducesResponseTypeAttribute(typeof(Error), StatusCodes.Status422UnprocessableEntity))
-        .WithTags("Authentication-Staff");
+        .WithTags("Authentication-Staff")
+        .WithGroupName(SwaggerDoc.SwaggerEndpointDefintions.HRAuthService)
+        ;
     }
 }

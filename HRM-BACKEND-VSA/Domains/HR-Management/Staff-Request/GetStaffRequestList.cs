@@ -1,6 +1,7 @@
 ﻿using Carter;
 using HRM_BACKEND_VSA.Database;
 using HRM_BACKEND_VSA.Domains.Staffs.Services;
+using HRM_BACKEND_VSA.Extensions;
 using HRM_BACKEND_VSA.Shared;
 using HRM_BACKEND_VSA.Utilities;
 using MediatR;
@@ -87,7 +88,9 @@ namespace HRM_BACKEND_VSA.Domains.HR_Management.Staff_Request
                 return Results.BadRequest();
             }).WithMetadata(new ProducesResponseTypeAttribute(typeof(Error), StatusCodes.Status400BadRequest))
               .WithMetadata(new ProducesResponseTypeAttribute(typeof(Paginator.PaginatedData<HRM_BACKEND_VSA.Entities.HR_Manag.StaffRequest>), StatusCodes.Status200OK))
-              .WithTags("Staff-Request");
+              .WithTags("Staff-Request")
+              .WithGroupName(SwaggerDoc.SwaggerEndpointDefintions.StaffRequestHandler)
+              ;
         }
 
     }

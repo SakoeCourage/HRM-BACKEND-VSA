@@ -1,4 +1,5 @@
 ﻿using Carter;
+using HRM_BACKEND_VSA.Extensions;
 using HRM_BACKEND_VSA.Serivices.ImageKit;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -41,7 +42,9 @@ namespace HRM_BACKEND_VSA.Domains
             {
                 await sender.Send(new TestFileUploadUrl.RequestData { image = image });
             }).WithTags("File Upload")
-            .DisableAntiforgery();
+            .DisableAntiforgery()
+            .WithGroupName(SwaggerDoc.SwaggerEndpointDefintions.TestFeature)
+            ;
             ;
         }
     }

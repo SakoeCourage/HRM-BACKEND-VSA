@@ -218,6 +218,7 @@ public class MapNewStaffAppointmentEndpoint : ICarterModule
             }
             return Results.BadRequest();
         }).WithTags("Staff-Request")
+        .WithGroupName(SwaggerDoc.SwaggerEndpointDefintions.AppoinmentAndSeparation)
             ;
     }
 }

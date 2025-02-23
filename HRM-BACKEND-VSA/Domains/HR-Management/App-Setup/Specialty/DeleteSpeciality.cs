@@ -1,5 +1,6 @@
 ﻿using Carter;
 using HRM_BACKEND_VSA.Database;
+using HRM_BACKEND_VSA.Extensions;
 using HRM_BACKEND_VSA.Shared;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -56,6 +57,7 @@ public class DeletePlayerEndpoint : ICarterModule
         })
         .WithMetadata(new ProducesResponseTypeAttribute(typeof(Error), StatusCodes.Status422UnprocessableEntity))
         .WithTags("Setup-Staff-Speciality")
+        .WithGroupName(SwaggerDoc.SwaggerEndpointDefintions.Setup)
           ;
     }
 }

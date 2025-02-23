@@ -9,6 +9,7 @@ using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
+using HRM_BACKEND_VSA.Extensions;
 using static HRM_BACKEND_VSA.Features.Applicant.ApplicantLogin;
 
 
@@ -105,6 +106,8 @@ public class MappApplicantLoginEndpoint : ICarterModule
         })
         .WithMetadata(new ProducesResponseTypeAttribute(typeof(ApplicantLoginResponse), StatusCodes.Status200OK))
         .WithMetadata(new ProducesResponseTypeAttribute(typeof(Error), StatusCodes.Status422UnprocessableEntity))
-        .WithTags("Authentication Applicant");
+        .WithTags("Authentication Applicant")
+        .WithGroupName(SwaggerDoc.SwaggerEndpointDefintions.ApplicantService)
+        ;
     }
 }

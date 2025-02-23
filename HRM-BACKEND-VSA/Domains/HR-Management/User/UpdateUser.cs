@@ -1,6 +1,7 @@
 ﻿using Carter;
 using FluentValidation;
 using HRM_BACKEND_VSA.Database;
+using HRM_BACKEND_VSA.Extensions;
 using HRM_BACKEND_VSA.Shared;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -168,6 +169,8 @@ public class MapUpdateUserEndPoint : ICarterModule
             }
 
             return Results.BadRequest();
-        }).WithTags("Manage-User");
+        }).WithTags("Manage-User")
+        .WithGroupName(SwaggerDoc.SwaggerEndpointDefintions.UserManagement)
+            ;
     }
 }

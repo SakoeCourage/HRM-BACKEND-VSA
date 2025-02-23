@@ -1,3 +1,4 @@
+using System.Reflection;
 using AutoMapper;
 using Carter;
 using FluentValidation;
@@ -16,6 +17,8 @@ using Microsoft.AspNetCore.Http.Json;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using System.Text.Json.Serialization;
+using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.RateLimiting;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -58,6 +61,15 @@ builder.Services.AddScoped<ImageKit>(serviceProvider =>
     var configuration = serviceProvider.GetRequiredService<IConfiguration>();
     return new ImageKit(configuration);
 });
+
+builder.Services.AddRateLimiter(_ => _
+    .AddFixedWindowLimiter(policyName: "fixed", options =>
+    {
+        options.PermitLimit = 4;
+        options.Window = TimeSpan.FromSeconds(12);
+        options.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+        options.QueueLimit = 2;
+    }));
 
 builder.Services.AddTransient<SMSService>();
 builder.Services.AddTransient<MailService>();
@@ -143,7 +155,16 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseSwagger();
-app.UseSwaggerUI();
+
+app.UseSwaggerUI(c =>
+{
+    c.DocumentTitle = "HRM-API Documentation";
+    var endpointDefinitions = typeof(SwaggerDoc.SwaggerEndpointDefintions).GetFields(BindingFlags.Public | BindingFlags.Static);
+    foreach (var definitions in endpointDefinitions)
+    {
+        c.SwaggerEndpoint($"/swagger/{definitions.GetValue(null)?.ToString()}/swagger.json",definitions.GetValue(null)?.ToString());
+    }
+});
 app.UseCors(MyAllowSpecificOrigins);
 
 app.UseHttpsRedirection();

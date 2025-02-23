@@ -6,6 +6,7 @@ using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Data.Common;
+using HRM_BACKEND_VSA.Extensions;
 using static HRM_BACKEND_VSA.Domains.HR_Management.App_Setup.ProfessionalBody.AddProfessionalBody;
 
 namespace HRM_BACKEND_VSA.Domains.HR_Management.App_Setup.ProfessionalBody
@@ -103,7 +104,7 @@ public class MappAddProfessionalBodyRequest : ICarterModule
         }).WithTags("Setup-ProfessionalBody")
               .WithMetadata(new ProducesResponseTypeAttribute(StatusCodes.Status200OK))
               .WithMetadata(new ProducesResponseTypeAttribute(typeof(Error), StatusCodes.Status400BadRequest))
-
+              .WithGroupName(SwaggerDoc.SwaggerEndpointDefintions.Setup)
           ;
     }
 }

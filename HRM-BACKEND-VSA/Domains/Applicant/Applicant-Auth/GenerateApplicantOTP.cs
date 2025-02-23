@@ -1,6 +1,7 @@
 ﻿using Carter;
 using HRM_BACKEND_VSA.Database;
 using HRM_BACKEND_VSA.Entities.Applicant;
+using HRM_BACKEND_VSA.Extensions;
 using HRM_BACKEND_VSA.Serivices.Mail_Service;
 using HRM_BACKEND_VSA.Services.SMS_Service;
 using HRM_BACKEND_VSA.Shared;
@@ -105,6 +106,8 @@ public class MappGenerateApplicantOTPEndpoint : ICarterModule
         })
         .WithMetadata(new ProducesResponseTypeAttribute(typeof(Error), StatusCodes.Status422UnprocessableEntity))
         .WithMetadata(new ProducesResponseTypeAttribute(StatusCodes.Status204NoContent))
-        .WithTags("Authentication Applicant");
+        .WithTags("Authentication Applicant")
+        .WithGroupName(SwaggerDoc.SwaggerEndpointDefintions.ApplicantService)
+        ;
     }
 }

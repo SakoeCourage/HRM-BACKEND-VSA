@@ -1,6 +1,7 @@
 ﻿using Carter;
 using FluentValidation;
 using HRM_BACKEND_VSA.Database;
+using HRM_BACKEND_VSA.Extensions;
 using HRM_BACKEND_VSA.Features.Role;
 using HRM_BACKEND_VSA.Shared;
 using MediatR;
@@ -105,6 +106,8 @@ public class EditRoleEndpooint : ICarterModule
             }
 
             return Results.Ok(response.Value);
-        }).WithTags("Setup-Role");
+        }).WithTags("Setup-Role")
+        .WithGroupName(SwaggerDoc.SwaggerEndpointDefintions.Setup)
+            ;
     }
 }

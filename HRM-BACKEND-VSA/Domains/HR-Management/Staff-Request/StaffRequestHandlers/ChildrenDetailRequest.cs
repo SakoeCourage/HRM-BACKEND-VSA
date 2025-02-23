@@ -306,6 +306,8 @@ public class MapNewChildrenDetailEndpoint : ICarterModule
 
             return Results.BadRequest("Something Went Wrong");
 
-        }).WithTags("Staff-Request");
+        }).WithTags("Staff-Request")
+            .WithGroupName(SwaggerDoc.SwaggerEndpointDefintions.StaffRequestHandler)
+            ;
     }
 }

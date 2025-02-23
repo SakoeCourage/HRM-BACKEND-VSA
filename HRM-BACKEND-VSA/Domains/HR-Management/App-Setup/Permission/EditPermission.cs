@@ -2,6 +2,7 @@
 using FluentValidation;
 using HRM_BACKEND_VSA.Database;
 using HRM_BACKEND_VSA.Entities;
+using HRM_BACKEND_VSA.Extensions;
 using HRM_BACKEND_VSA.Shared;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -98,6 +99,7 @@ public class CreateEdittPermissionEndpoint : ICarterModule
         }).WithMetadata(new ProducesResponseTypeAttribute(typeof(Error), StatusCodes.Status400BadRequest))
             .WithMetadata(new ProducesResponseTypeAttribute(typeof(Permission), StatusCodes.Status200OK))
             .WithTags("Setup-Permission")
+            .WithGroupName(SwaggerDoc.SwaggerEndpointDefintions.Setup)
             ;
     }
 }

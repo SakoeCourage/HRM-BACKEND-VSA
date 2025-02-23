@@ -1,5 +1,6 @@
 ﻿using Carter;
 using HRM_BACKEND_VSA.Database;
+using HRM_BACKEND_VSA.Extensions;
 using HRM_BACKEND_VSA.Shared;
 using HRM_BACKEND_VSA.Utilities;
 using MediatR;
@@ -73,7 +74,9 @@ public class GetBankListEndpoint : ICarterModule
             return Results.BadRequest("Empty Result");
         }).WithMetadata(new ProducesResponseTypeAttribute(typeof(Error), StatusCodes.Status400BadRequest))
           .WithMetadata(new ProducesResponseTypeAttribute(typeof(Paginator.PaginatedData<HRM_BACKEND_VSA.Entities.HR_Manag.Bank>), StatusCodes.Status200OK))
-          .WithTags("Setup-Bank");
+          .WithTags("Setup-Bank")
+          .WithGroupName(SwaggerDoc.SwaggerEndpointDefintions.Setup)
+          ;
     }
 
 }

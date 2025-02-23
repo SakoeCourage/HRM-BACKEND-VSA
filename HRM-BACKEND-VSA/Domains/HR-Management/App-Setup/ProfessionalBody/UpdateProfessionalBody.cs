@@ -2,6 +2,7 @@
 using FluentValidation;
 using HRM_BACKEND_VSA.Database;
 using HRM_BACKEND_VSA.Domains.HR_Management.App_Setup.ProfessionalBody;
+using HRM_BACKEND_VSA.Extensions;
 using HRM_BACKEND_VSA.Shared;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -95,7 +96,9 @@ public class MapUpdateProfessionalBodyEndpoint : ICarterModule
             return Results.BadRequest();
 
         }).WithTags("Setup-ProfessionalBody")
-        .WithMetadata(new ProducesResponseTypeAttribute(StatusCodes.Status204NoContent));
+        .WithMetadata(new ProducesResponseTypeAttribute(StatusCodes.Status204NoContent))
+        .WithGroupName(SwaggerDoc.SwaggerEndpointDefintions.Setup)
+        ;
 
     }
 }

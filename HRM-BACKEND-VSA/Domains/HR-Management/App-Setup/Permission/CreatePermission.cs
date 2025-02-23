@@ -1,6 +1,7 @@
 ﻿using Carter;
 using FluentValidation;
 using HRM_BACKEND_VSA.Database;
+using HRM_BACKEND_VSA.Extensions;
 using HRM_BACKEND_VSA.Features.Permission;
 using HRM_BACKEND_VSA.Shared;
 using MediatR;
@@ -97,7 +98,7 @@ public class CreatePermissionEndpint : ICarterModule
                 return Results.Ok(response.Value);
             }
         ).WithTags("Setup-Permission")
-
+        .WithGroupName(SwaggerDoc.SwaggerEndpointDefintions.Setup)
             ;
     }
 }

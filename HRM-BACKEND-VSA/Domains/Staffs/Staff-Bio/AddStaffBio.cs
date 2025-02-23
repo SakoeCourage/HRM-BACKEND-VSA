@@ -3,6 +3,7 @@ using Carter;
 using FluentValidation;
 using HRM_BACKEND_VSA.Database;
 using HRM_BACKEND_VSA.Domains.HR_Management.StaffRequestHandlers;
+using HRM_BACKEND_VSA.Extensions;
 using HRM_BACKEND_VSA.Providers;
 using HRM_BACKEND_VSA.Shared;
 using HRM_BACKEND_VSA.Utilities;
@@ -145,6 +146,8 @@ public class MapAddStaffioEndpint : ICarterModule
                 }
                 return Results.Ok(response.Value);
             }
-        ).WithTags("Staff-Bio");
+        ).WithTags("Staff-Bio")
+        .WithGroupName(SwaggerDoc.SwaggerEndpointDefintions.Planning)
+            ;
     }
 }

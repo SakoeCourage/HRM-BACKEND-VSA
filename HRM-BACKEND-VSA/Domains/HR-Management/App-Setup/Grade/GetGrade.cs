@@ -1,6 +1,7 @@
 ﻿using Carter;
 using HRM_BACKEND_VSA.Database;
 using HRM_BACKEND_VSA.Entities;
+using HRM_BACKEND_VSA.Extensions;
 using HRM_BACKEND_VSA.Shared;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -62,6 +63,8 @@ public class MapGetGradeEnpoint : ICarterModule
 
         }).WithTags("Setup-Grade")
            .WithMetadata(new ProducesResponseTypeAttribute(typeof(Grade), StatusCodes.Status200OK))
-           .WithMetadata(new ProducesResponseTypeAttribute(typeof(Error), StatusCodes.Status400BadRequest));
+           .WithMetadata(new ProducesResponseTypeAttribute(typeof(Error), StatusCodes.Status400BadRequest))
+           .WithGroupName(SwaggerDoc.SwaggerEndpointDefintions.Setup)
+           ;
     }
 }

@@ -1,6 +1,7 @@
 ﻿using Carter;
 using HRM_BACKEND_VSA.Database;
 using HRM_BACKEND_VSA.Entities;
+using HRM_BACKEND_VSA.Extensions;
 using HRM_BACKEND_VSA.Shared;
 using HRM_BACKEND_VSA.Utilities;
 using MediatR;
@@ -77,6 +78,8 @@ public class MapGetGradeStepListEnpoint : ICarterModule
             return Results.BadRequest("Empty Result");
         }).WithMetadata(new ProducesResponseTypeAttribute(typeof(Error), StatusCodes.Status400BadRequest))
           .WithMetadata(new ProducesResponseTypeAttribute(typeof(Paginator.PaginatedData<GradeStep>), StatusCodes.Status200OK))
-          .WithTags("Setup-Grade-Step");
+          .WithTags("Setup-Grade-Step")
+          .WithGroupName(SwaggerDoc.SwaggerEndpointDefintions.Setup)
+          ;
     }
 }

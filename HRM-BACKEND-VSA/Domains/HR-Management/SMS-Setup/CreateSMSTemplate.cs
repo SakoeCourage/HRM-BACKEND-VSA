@@ -7,6 +7,7 @@ using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
+using HRM_BACKEND_VSA.Extensions;
 using static HRM_BACKEND_VSA.Features.SMS_Setup.CreateSMSTemplate;
 
 namespace HRM_BACKEND_VSA.Features.SMS_Setup
@@ -98,6 +99,8 @@ public class MapCreateSMSTemplateEndpoint : ICarterModule
         })
         .WithMetadata(new ProducesResponseTypeAttribute(typeof(Error), StatusCodes.Status422UnprocessableEntity))
         .WithMetadata(new ProducesResponseTypeAttribute(typeof(Guid), StatusCodes.Status200OK))
-        .WithTags("Setup-SMS Template");
+        .WithTags("Setup-SMS Template")
+        .WithGroupName(SwaggerDoc.SwaggerEndpointDefintions.SMSService)
+        ;
     }
 }
