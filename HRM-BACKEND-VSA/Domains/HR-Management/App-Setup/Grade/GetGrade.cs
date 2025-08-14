@@ -1,4 +1,6 @@
-﻿using Carter;
+﻿using AutoMapper;
+using Carter;
+using HRM_BACKEND_VSA.Contracts;
 using HRM_BACKEND_VSA.Database;
 using HRM_BACKEND_VSA.Entities;
 using HRM_BACKEND_VSA.Extensions;
@@ -12,14 +14,14 @@ namespace HRM_BACKEND_VSA.Domains.HR_Management.App_Setup.Grade
 {
     public static class GetGrade
     {
-        public class getGradeRequest : IRequest<Shared.Result<Entities.Grade>>
+        public class getGradeRequest : IRequest<Shared.Result<SetupContract.GradeResponseDto>>
         {
             public Guid id { get; set; }
         }
 
-        internal sealed class Handler(HRMDBContext dbContext) : IRequestHandler<getGradeRequest, Shared.Result<Entities.Grade>>
+        internal sealed class Handler(HRMDBContext dbContext,IMapper mapper) : IRequestHandler<getGradeRequest, Shared.Result<SetupContract.GradeResponseDto>>
         {
-            public async Task<Result<Entities.Grade>> Handle(getGradeRequest request, CancellationToken cancellationToken)
+            public async Task<Result<SetupContract.GradeResponseDto>> Handle(getGradeRequest request, CancellationToken cancellationToken)
             {
                 var response = await dbContext.Grade
                     .Include(g => g.steps)
@@ -27,10 +29,11 @@ namespace HRM_BACKEND_VSA.Domains.HR_Management.App_Setup.Grade
 
                 if (response == null)
                 {
-                    return Shared.Result.Failure<Entities.Grade>(Error.CreateNotFoundError("Grade Not Found"));
+                    return Shared.Result.Failure<SetupContract.GradeResponseDto>(Error.CreateNotFoundError("Grade Not Found"));
                 }
 
-                return Shared.Result.Success(response);
+                var data = mapper.Map<SetupContract.GradeResponseDto>(response);
+                return Shared.Result.Success(data);
             }
         }
     }
@@ -62,7 +65,7 @@ public class MapGetGradeEnpoint : ICarterModule
             return Results.BadRequest();
 
         }).WithTags("Setup-Grade")
-           .WithMetadata(new ProducesResponseTypeAttribute(typeof(Grade), StatusCodes.Status200OK))
+           .WithMetadata(new ProducesResponseTypeAttribute(typeof(SetupContract.GradeResponseDto), StatusCodes.Status200OK))
            .WithMetadata(new ProducesResponseTypeAttribute(typeof(Error), StatusCodes.Status400BadRequest))
            .WithGroupName(SwaggerDoc.SwaggerEndpointDefintions.Setup)
            ;

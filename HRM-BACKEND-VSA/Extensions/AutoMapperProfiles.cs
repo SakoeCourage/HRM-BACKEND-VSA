@@ -26,6 +26,9 @@ namespace HRM_BACKEND_VSA.Extensions
             CreateMap<StaffAppointment, StaffAppointmentHistory>().ReverseMap();
             CreateMap<StaffAccomodationDetail, StaffAccomodationUpdateHistory>().ReverseMap();
             CreateMap<Staff, StaffBioUpdateHistory>().ReverseMap();
+            CreateMap<SetupContract.GradeStepResponseDto, GradeStep>().ReverseMap();
+            CreateMap<SetupContract.GradeResponseDto, Grade>().ReverseMap();
+
         }
     }
 }

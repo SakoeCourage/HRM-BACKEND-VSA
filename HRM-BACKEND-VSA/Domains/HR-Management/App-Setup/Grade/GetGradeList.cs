@@ -1,4 +1,5 @@
 ﻿using Carter;
+using HRM_BACKEND_VSA.Contracts;
 using HRM_BACKEND_VSA.Database;
 using HRM_BACKEND_VSA.Entities;
 using HRM_BACKEND_VSA.Extensions;
@@ -37,7 +38,18 @@ namespace HRM_BACKEND_VSA.Domains.HR_Management.App_Setup.Grade
                         .WithSort(request?.sort)
                         .Paginate(request?.pageNumber, request?.pageSize);
 
-                var response = await queryBuilder.BuildAsync();
+                var response = await queryBuilder.BuildAsync((entry) =>
+                new SetupContract.GradeListResponseDto{
+                    Id = entry.Id,
+                    createdAt = entry.createdAt,
+                    updatedAt = entry.updatedAt,
+                    gradeName = entry.gradeName,
+                    marketPremium = entry.marketPremium,
+                    level = entry.level,
+                    scale = entry.scale,
+                    minimumStep = entry.minimumStep,
+                    maximumStep = entry.maximumStep,
+                });
 
                 return Shared.Result.Success(response);
             }
@@ -73,7 +85,7 @@ public class MapGetGradeListEnpoint : ICarterModule
 
             return Results.BadRequest("Empty Result");
         }).WithMetadata(new ProducesResponseTypeAttribute(typeof(Error), StatusCodes.Status400BadRequest))
-          .WithMetadata(new ProducesResponseTypeAttribute(typeof(Paginator.PaginatedData<Grade>), StatusCodes.Status200OK))
+          .WithMetadata(new ProducesResponseTypeAttribute(typeof(Paginator.PaginatedData<SetupContract.GradeListResponseDto>), StatusCodes.Status200OK))
           .WithGroupName(SwaggerDoc.SwaggerEndpointDefintions.Setup)
           .WithTags("Setup-Grade");
     }

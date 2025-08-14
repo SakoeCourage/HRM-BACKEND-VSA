@@ -3,7 +3,7 @@ using System.Linq.Dynamic.Core;
 
 namespace HRM_BACKEND_VSA.Utilities
 {
-    public class QueryBuilder<T>
+     public class QueryBuilder<T>
     {
         private IQueryable<T> _query;
         private string _searchKey;
@@ -53,7 +53,7 @@ namespace HRM_BACKEND_VSA.Utilities
         }
 
 
-        public async Task<object> BuildAsync()
+        public async Task<object> BuildAsync(Func<T, object> selector = null)
         {
             var result = _query;
 
@@ -70,19 +70,45 @@ namespace HRM_BACKEND_VSA.Utilities
             // Applying sorting
             if (!string.IsNullOrWhiteSpace(_sortBy))
             {
-                result = _sortDirection.ToLower() == "asc" ? result.OrderBy(x => EF.Property<string>(x, _sortBy)) : result.OrderByDescending(x => EF.Property<string>(x, _sortBy));
+                result = _sortDirection.ToLower() == "asc"
+                    ? result.OrderBy(x => EF.Property<object>(x, _sortBy))
+                    : result.OrderByDescending(x => EF.Property<object>(x, _sortBy));
             }
-
 
             if (_pageSize != null)
             {
                 var paginatedData = await Paginator.PaginateAsync(result, (int)_pageNumber, (int)_pageSize);
+
+                // Apply the selector on the paginated data if provided
+                if (selector != null)
+                {
+                    // Apply the selector function to the paginated data
+                    var selectedData = paginatedData.Data.Select(selector).ToList();
+                    // Use ToList instead of ToListAsync
+                    var newPaginatedData = new Paginator.PaginatedData<object>
+                    {
+                        TotalCount = paginatedData.TotalCount,
+                        TotalPages = paginatedData.TotalPages,
+                        CurrentPage = paginatedData.CurrentPage,
+                        PageSize = paginatedData.PageSize,
+                        NextPageUrl = paginatedData.NextPageUrl,
+                        PreviousPageUrl = paginatedData.PreviousPageUrl,
+                        Path = paginatedData.Path,
+                        Links = paginatedData.Links,
+                        Data = selectedData
+                    };
+                    return newPaginatedData;
+                }
+
                 return paginatedData;
             }
 
-            return await result.ToListAsync();
+            
+            return selector != null
+                ? result.Select(selector).ToList() 
+                : await result.ToListAsync();      
         }
-
+        
         public QueryBuilder<T> Paginate(int? pageNumber, int? pageSize = null)
         {
             if (pageSize is not null)

@@ -1,4 +1,6 @@
-﻿using Carter;
+﻿using AutoMapper;
+using Carter;
+using HRM_BACKEND_VSA.Contracts;
 using HRM_BACKEND_VSA.Database;
 using HRM_BACKEND_VSA.Entities;
 using HRM_BACKEND_VSA.Extensions;
@@ -17,7 +19,7 @@ namespace HRM_BACKEND_VSA.Domains.HR_Management.App_Setup.Grade
             public Guid gradeId { get; set; }
         }
 
-        internal sealed class Handler(HRMDBContext dbContext) : IRequestHandler<GetCateogoryFromGradeIdRequest, Shared.Result<object>>
+        internal sealed class Handler(HRMDBContext dbContext,IMapper mapper) : IRequestHandler<GetCateogoryFromGradeIdRequest, Shared.Result<object>>
         {
             public async Task<Result<object>> Handle(GetCateogoryFromGradeIdRequest request, CancellationToken cancellationToken)
             {
@@ -35,18 +37,22 @@ namespace HRM_BACKEND_VSA.Domains.HR_Management.App_Setup.Grade
                       }
                     )
                     .Select(entry =>
-                    new
+                    new SetupContract.CategoryResponseDto
                     {
-                        id = entry.Category.Id,
+                        Id = entry.Category.Id,
                         categoryName = entry.Category.categoryName,
                         gradeName = entry.Grade.gradeName,
                         level = entry.Grade.level,
                         scale = entry.Grade.scale,
-                        steps = entry.Grade.steps,
-                        specialities = entry.Category.specialities
+                        steps = mapper.Map<ICollection<SetupContract.GradeStepResponseDto>>(entry.Grade.steps),
                     }
                     )
                     .ToListAsync();
+
+                if (response.Count == 0)
+                {
+                    return Shared.Result.Failure<object>(Error.CreateNotFoundError("Category Not Found"));
+                }
 
                 return Shared.Result.Success<object>(response.Count > 0 ? response.First() : response);
 
@@ -81,10 +87,9 @@ public class MapGetCategoryFromGradeId : ICarterModule
             return Results.BadRequest();
 
         }).WithTags("Setup-Grade")
-               .WithDescription("Get category and specialty list from grade id")
-              .WithMetadata(new ProducesResponseTypeAttribute(typeof(Category), StatusCodes.Status200OK))
-              .WithMetadata(new ProducesResponseTypeAttribute(typeof(Error), StatusCodes.Status400BadRequest))
-              .WithGroupName(SwaggerDoc.SwaggerEndpointDefintions.Setup)
-               ;
+            .WithDescription("Get category and specialty list from grade id")
+            .WithMetadata(new ProducesResponseTypeAttribute(typeof(SetupContract.CategoryResponseDto), StatusCodes.Status200OK))
+            .WithMetadata(new ProducesResponseTypeAttribute(typeof(Error), StatusCodes.Status400BadRequest))
+            .WithGroupName(SwaggerDoc.SwaggerEndpointDefintions.Setup);
     }
 }

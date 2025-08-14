@@ -1,6 +1,7 @@
 ﻿using Carter;
 using FluentValidation;
 using HRM_BACKEND_VSA.Database;
+using HRM_BACKEND_VSA.Extensions;
 using HRM_BACKEND_VSA.Providers;
 using HRM_BACKEND_VSA.Shared;
 using MediatR;
@@ -33,34 +34,49 @@ namespace HRM_BACKEND_VSA.Domains.HR_Management.User.User_Authentication
             private readonly Authprovider _authProvider;
             private readonly HRMDBContext _dbContext;
             private readonly IValidator<ChangePasswordRequest> _validator;
-            public Handler(Authprovider authProvider, HRMDBContext dbContext, IValidator<ChangePasswordRequest> validator)
+
+            public Handler(Authprovider authProvider, HRMDBContext dbContext,
+                IValidator<ChangePasswordRequest> validator)
             {
                 _authProvider = authProvider;
                 _dbContext = dbContext;
                 _validator = validator;
             }
+
             public async Task<Result<string>> Handle(ChangePasswordRequest request, CancellationToken cancellationToken)
             {
                 var validationResult = _validator.Validate(request);
 
-                if (validationResult.IsValid is false) { return Shared.Result.Failure<string>(Error.ValidationError(validationResult)); }
+                if (validationResult.IsValid is false)
+                {
+                    return Shared.Result.Failure<string>(Error.ValidationError(validationResult));
+                }
 
                 var authUser = await _authProvider.GetAuthUser();
 
-                if (authUser is null) { return Shared.Result.Failure<string>("User Not Found"); }
+                if (authUser is null)
+                {
+                    return Shared.Result.Failure<string>("User Not Found");
+                }
 
                 var passwordMatach = BCrypt.Net.BCrypt.Verify(request.currentPassword, authUser.password);
-                if (passwordMatach is false) { return Shared.Result.Failure<string>(Error.BadRequest("Failed To Verify Current Password")); }
+                if (passwordMatach is false)
+                {
+                    return Shared.Result.Failure<string>(Error.BadRequest("Failed To Verify Current Password"));
+                }
 
                 var affectedRow = await _dbContext.User
                     .Where(x => x.Id == authUser.Id)
                     .ExecuteUpdateAsync(setters =>
-                    setters.SetProperty(c => c.password, BCrypt.Net.BCrypt.HashPassword(request.newPassword))
-                    .SetProperty(c => c.updatedAt, DateTime.UtcNow)
-                    .SetProperty(c => c.hasResetPassword, true)
+                        setters.SetProperty(c => c.password, BCrypt.Net.BCrypt.HashPassword(request.newPassword))
+                            .SetProperty(c => c.updatedAt, DateTime.UtcNow)
+                            .SetProperty(c => c.hasResetPassword, true)
                     );
 
-                if (affectedRow == 0) { return Shared.Result.Failure<string>("Failed To Update Password. Please Try Again"); }
+                if (affectedRow == 0)
+                {
+                    return Shared.Result.Failure<string>("Failed To Update Password. Please Try Again");
+                }
 
                 return Shared.Result.Success("Password Updated Successfully");
             }
@@ -74,26 +90,28 @@ public class MapChangePasswordEndpoint : ICarterModule
     public void AddRoutes(IEndpointRouteBuilder app)
     {
         app.MapPost("api/auth/user/password-reset",
-            [Authorize(Policy = AuthorizationDecisionType.HRMUser)]
-        async (ISender sender, ChangePasswordRequest request) =>
-            {
-                var response = await sender.Send(request);
-
-                if (response.IsSuccess)
+                [Authorize(Policy = AuthorizationDecisionType.HRMUser)]
+                async (ISender sender, ChangePasswordRequest request) =>
                 {
-                    return Results.Ok(response.Value);
-                }
-                if (response.IsFailure)
-                {
-                    return Results.UnprocessableEntity(response.Error);
-                }
+                    var response = await sender.Send(request);
 
-                return Results.BadRequest();
-            })
-        .WithMetadata(new ProducesResponseTypeAttribute(StatusCodes.Status200OK))
-        .WithMetadata(new ProducesResponseTypeAttribute(StatusCodes.Status401Unauthorized))
-        .WithMetadata(new ProducesResponseTypeAttribute(typeof(Error), StatusCodes.Status422UnprocessableEntity))
-        .WithTags("Authentication-HRM-User")
+                    if (response.IsSuccess)
+                    {
+                        return Results.Ok(response.Value);
+                    }
+
+                    if (response.IsFailure)
+                    {
+                        return Results.UnprocessableEntity(response.Error);
+                    }
+
+                    return Results.BadRequest();
+                })
+            .WithMetadata(new ProducesResponseTypeAttribute(StatusCodes.Status200OK))
+            .WithMetadata(new ProducesResponseTypeAttribute(StatusCodes.Status401Unauthorized))
+            .WithMetadata(new ProducesResponseTypeAttribute(typeof(Error), StatusCodes.Status422UnprocessableEntity))
+            .WithTags("Authentication-HRM-User")
+            .WithGroupName(SwaggerDoc.SwaggerEndpointDefintions.HRAuthService)
             ;
     }
 }

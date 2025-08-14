@@ -1,10 +1,12 @@
 ﻿using Carter;
+using HRM_BACKEND_VSA.Contracts;
 using HRM_BACKEND_VSA.Database;
 using HRM_BACKEND_VSA.Extensions;
 using HRM_BACKEND_VSA.Shared;
 using HRM_BACKEND_VSA.Utilities;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using static HRM_BACKEND_VSA.Contracts.UrlNavigation;
 using static HRM_BACKEND_VSA.Domains.HR_Management.App_Setup.Specialty.GetSpecialityList;
 
@@ -30,14 +32,29 @@ namespace HRM_BACKEND_VSA.Domains.HR_Management.App_Setup.Specialty
             }
             public async Task<Shared.Result<object>> Handle(GetSpecialityListRequest request, CancellationToken cancellationToken)
             {
-                var query = _dBContext.Speciality.AsQueryable();
+                var query = _dBContext.Speciality
+                        .AsQueryable()
+                        .Include(entry=>entry.category);
 
-                var schoolQueryBuilder = new QueryBuilder<Entities.Speciality>(query)
+                var builder = new QueryBuilder<Entities.Speciality>(query)
                         .WithSearch(request?.search, "specialityName")
                         .WithSort(request?.sort)
                         .Paginate(request?.pageNumber, request?.pageSize);
 
-                var response = await schoolQueryBuilder.BuildAsync();
+                var response = await builder.BuildAsync((entry) => new SetupContract.SpecialityListResponseDto
+                {
+                    Id = entry.Id,
+                    createdAt = entry.createdAt,
+                    updatedAt = entry.updatedAt,
+                    specialityName = entry.specialityName,
+                    category = new SetupContract.CategoryListResponseDto
+                    {
+                        Id = entry.category.Id,
+                        createdAt = entry.category.createdAt,
+                        updatedAt = entry.category.updatedAt,
+                        categoryName = entry.category.categoryName
+                    }
+                });
 
                 return Shared.Result.Success(response);
             }
@@ -71,10 +88,9 @@ public class MapGetSpecialityListEndpoint : ICarterModule
                 return Results.Ok(response.Value);
             }
 
-
             return Results.BadRequest("Empty Result");
         }).WithMetadata(new ProducesResponseTypeAttribute(typeof(Error), StatusCodes.Status400BadRequest))
-          .WithMetadata(new ProducesResponseTypeAttribute(typeof(Paginator.PaginatedData<HRM_BACKEND_VSA.Entities.Speciality>), StatusCodes.Status200OK))
+          .WithMetadata(new ProducesResponseTypeAttribute(typeof(Paginator.PaginatedData<SetupContract.SpecialityListResponseDto>), StatusCodes.Status200OK))
           .WithGroupName(SwaggerDoc.SwaggerEndpointDefintions.Setup)
           .WithTags("Setup-Staff-Speciality");
     }

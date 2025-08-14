@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Carter;
 using HRM_BACKEND_VSA.Database;
+using HRM_BACKEND_VSA.Extensions;
 using HRM_BACKEND_VSA.Serivices.Mail_Service;
 using HRM_BACKEND_VSA.Services.SMS_Service;
 using HRM_BACKEND_VSA.Shared;
@@ -110,6 +111,8 @@ public class MappUserLoginEndpoint : ICarterModule
          .WithMetadata(new ProducesResponseTypeAttribute(StatusCodes.Status200OK))
         .WithMetadata(new ProducesResponseTypeAttribute(typeof(Error), StatusCodes.Status422UnprocessableEntity))
         .WithMetadata(new ProducesResponseTypeAttribute(StatusCodes.Status400BadRequest))
-        .WithTags("Authentication-HRM-User");
+        .WithTags("Authentication-HRM-User")
+        .WithGroupName(SwaggerDoc.SwaggerEndpointDefintions.HRAuthService)
+         ;
     }
 }

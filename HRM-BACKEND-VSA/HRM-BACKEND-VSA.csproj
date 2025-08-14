@@ -50,4 +50,8 @@
     <None Include="..\.editorconfig" Link=".editorconfig" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Include=".github\workflows\fly.yml" />
+  </ItemGroup>
+
 </Project>

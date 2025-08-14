@@ -1,4 +1,5 @@
 ﻿using Carter;
+using HRM_BACKEND_VSA.Contracts;
 using HRM_BACKEND_VSA.Database;
 using HRM_BACKEND_VSA.Entities;
 using HRM_BACKEND_VSA.Extensions;
@@ -12,14 +13,14 @@ namespace HRM_BACKEND_VSA.Domains.HR_Management.App_Setup.Grade
 {
     public static class GetSpecialityFromGradeId
     {
-        public class GetSpecialityFromGradeIdRequest : IRequest<Shared.Result<ICollection<Entities.Speciality>>>
+        public class GetSpecialityFromGradeIdRequest : IRequest<Shared.Result<ICollection<SetupContract.SpecialityListResponseDto>>>
         {
             public Guid gradeId { get; set; }
         }
 
-        internal sealed class Handler(HRMDBContext dbContext) : IRequestHandler<GetSpecialityFromGradeIdRequest, Shared.Result<ICollection<Entities.Speciality>>>
+        internal sealed class Handler(HRMDBContext dbContext) : IRequestHandler<GetSpecialityFromGradeIdRequest, Shared.Result<ICollection<SetupContract.SpecialityListResponseDto>>>
         {
-            async Task<Result<ICollection<Speciality>>> IRequestHandler<GetSpecialityFromGradeIdRequest, Result<ICollection<Speciality>>>.Handle(GetSpecialityFromGradeIdRequest request, CancellationToken cancellationToken)
+            public async Task<Result<ICollection<SetupContract.SpecialityListResponseDto>>> Handle(GetSpecialityFromGradeIdRequest request, CancellationToken cancellationToken)
             {
                 Console.WriteLine(request.gradeId);
 
@@ -29,14 +30,33 @@ namespace HRM_BACKEND_VSA.Domains.HR_Management.App_Setup.Grade
 
                 if (grade == null)
                 {
-                    return Shared.Result.Failure<ICollection<Entities.Speciality>>(Error.CreateNotFoundError("Grade Not Found"));
+                    return Shared.Result.Failure<ICollection<SetupContract.SpecialityListResponseDto>>(Error.CreateNotFoundError("Grade Not Found"));
                 }
 
-                var response = await dbContext.Speciality.Where(s => s.categoryId == grade.categoryId).ToListAsync(cancellationToken);
+                var response = await dbContext.Speciality
+                    .Where(s => s.categoryId == grade.categoryId)
+                    .Select(entry=> new SetupContract.SpecialityListResponseDto
+                    {
+                        Id = entry.Id,
+                        createdAt = entry.createdAt,
+                        updatedAt = entry.updatedAt,
+                        specialityName = entry.specialityName,
+                        category = new SetupContract.CategoryListResponseDto
+                        {
+                            Id = entry.category.Id,
+                            createdAt = entry.category.createdAt,
+                            updatedAt = entry.category.updatedAt,
+                            categoryName = entry.category.categoryName
+                        }
+                    })
+                    .ToListAsync(cancellationToken)
+                    ;
 
-                return Shared.Result.Success<ICollection<Entities.Speciality>>(response);
+                return Shared.Result.Success<ICollection<SetupContract.SpecialityListResponseDto>>(response);
 
             }
+
+          
         }
     }
 }
@@ -68,7 +88,7 @@ public class MapGetSpecialityFromGradeId : ICarterModule
 
         }).WithTags("Setup-Staff-Speciality")
                .WithDescription("Get Specialities list from grade id")
-              .WithMetadata(new ProducesResponseTypeAttribute(typeof(Guid), StatusCodes.Status200OK))
+              .WithMetadata(new ProducesResponseTypeAttribute(typeof(SetupContract.SpecialityListResponseDto), StatusCodes.Status200OK))
               .WithMetadata(new ProducesResponseTypeAttribute(typeof(Error), StatusCodes.Status400BadRequest))
               .WithGroupName(SwaggerDoc.SwaggerEndpointDefintions.Setup)
                ;

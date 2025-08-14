@@ -1,4 +1,5 @@
 ﻿using Carter;
+using HRM_BACKEND_VSA.Contracts;
 using HRM_BACKEND_VSA.Database;
 using HRM_BACKEND_VSA.Entities;
 using HRM_BACKEND_VSA.Extensions;
@@ -31,14 +32,20 @@ namespace HRM_BACKEND_VSA.Domains.HR_Management.App_Setup.Category
             }
             public async Task<Result<object>> Handle(GetCategoryListRequest request, CancellationToken cancellationToken)
             {
-                var query = _dBContext.Category.AsQueryable().Include(x => x.specialities);
+                var query = _dBContext.Category.AsQueryable();
 
                 var queryBuilder = new QueryBuilder<Entities.Category>(query)
                         .WithSearch(request?.search, "categoryName")
                         .WithSort(request?.sort)
                         .Paginate(request?.pageNumber, request?.pageSize);
 
-                var response = await queryBuilder.BuildAsync();
+                var response = await queryBuilder.BuildAsync((entry)=>new SetupContract.CategoryListResponseDto
+                {
+                    Id = entry.Id,
+                    createdAt = entry.createdAt,
+                    updatedAt = entry.updatedAt,
+                    categoryName = entry.categoryName,
+                });
 
                 return Shared.Result.Success(response);
             }
@@ -75,7 +82,7 @@ public class GetCommunityListEndpoint : ICarterModule
 
             return Results.BadRequest("Empty Result");
         }).WithMetadata(new ProducesResponseTypeAttribute(typeof(Error), StatusCodes.Status400BadRequest))
-          .WithMetadata(new ProducesResponseTypeAttribute(typeof(Paginator.PaginatedData<Category>), StatusCodes.Status200OK))
+          .WithMetadata(new ProducesResponseTypeAttribute(typeof(Paginator.PaginatedData<SetupContract.CategoryListResponseDto>), StatusCodes.Status200OK))
           .WithGroupName(SwaggerDoc.SwaggerEndpointDefintions.Setup)
           .WithTags("Setup-Category");
     }

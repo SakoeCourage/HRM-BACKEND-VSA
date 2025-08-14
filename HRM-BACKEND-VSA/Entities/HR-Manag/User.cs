@@ -18,13 +18,12 @@ namespace HRM_BACKEND_VSA.Entities
         public Guid staffId { get; set; }
         public Guid roleId { get; set; }
         public Guid unitId { get; set; }
-        public Guid departmentId { get; set; }
         public string email { get; set; }
         [JsonIgnore]
         public string password { get; set; }
         public virtual Staff.Staff staff { get; set; }
         public virtual Role role { get; set; }
         public virtual Unit unit { get; set; }
-        public virtual Department department { get; set; }
+        
     }
 }

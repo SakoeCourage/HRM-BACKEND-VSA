@@ -16,10 +16,10 @@ namespace HRM_BACKEND_VSA.Domains.HR_Management.Staff_Posting
 {
     public static class NewStaffPosting
     {
-
         public class NewStaffPostingRequest : IRequest<Shared.Result<Guid>>
         {
-            public Guid polymorphicId { get; set; }
+            public Guid? staffId { get; set; }
+            public Guid? polymorphicId { get; set; }
             public Guid directorateId { get; set; }
             public Guid departmentId { get; set; }
             public Guid unitId { get; set; }
@@ -30,8 +30,6 @@ namespace HRM_BACKEND_VSA.Domains.HR_Management.Staff_Posting
         {
             public validator()
             {
-                RuleFor(c => c.polymorphicId)
-                   .NotEmpty();
                 RuleFor(c => c.directorateId)
                     .NotEmpty();
                 RuleFor(c => c.departmentId)
@@ -50,7 +48,9 @@ namespace HRM_BACKEND_VSA.Domains.HR_Management.Staff_Posting
             private readonly IValidator<NewStaffPostingRequest> _validator;
             private readonly MailService _mailService;
             private readonly IMapper _mapper;
-            public Handler(IMapper mapper, MailService mailService, HRMDBContext dbContext, HRMStaffDBContext staffDBContext, IValidator<NewStaffPostingRequest> validator)
+
+            public Handler(IMapper mapper, MailService mailService, HRMDBContext dbContext,
+                HRMStaffDBContext staffDBContext, IValidator<NewStaffPostingRequest> validator)
             {
                 _dbContext = dbContext;
                 _validator = validator;
@@ -63,60 +63,71 @@ namespace HRM_BACKEND_VSA.Domains.HR_Management.Staff_Posting
             {
                 var validationResult = _validator.Validate(request);
 
+                if (request?.polymorphicId == null && request?.staffId == null)
+                {
+                    return Shared.Result.Failure<Guid>(Error.BadRequest("Polymorphic Id or Staff Id is required"));
+                }
+
                 if (validationResult.IsValid is false)
                 {
                     return Shared.Result.Failure<Guid>(Error.ValidationError(validationResult));
                 }
 
-                var staffApplicationData = await _staffDBContext
-                   .ApplicantBioData
-                   .FirstOrDefaultAsync(x => x.applicantId == request.polymorphicId);
 
-                if (staffApplicationData is null)
-                {
-                    return Shared.Result.Failure<Guid>(Error.CreateNotFoundError("Applicant Bio Data Not Found"));
-                }
-
-                var staffRequest = await _dbContext.StaffRequest
-                    .Include(r => r.requestFromStaff)
-                    .FirstOrDefaultAsync(r => r.requestType == RegisterationRequestTypes.newRegisteration && r.RequestDetailPolymorphicId == request.polymorphicId);
-
-                if (staffRequest == null)
-                {
-                    return Shared.Result.Failure<Guid>(Error.CreateNotFoundError("Request Data Not Found"));
-                }
-
-                var existingStaff = await _dbContext.Staff.Include(s => s.currentAppointment).FirstOrDefaultAsync(s => s.Id == staffRequest.requestFromStaff.Id);
-
-                if (existingStaff is null)
-                {
-                    return Shared.Result.Failure<Guid>(Error.CreateNotFoundError("Staff Data Not Found"));
-                }
-
-                if (existingStaff?.currentAppointment is null)
-                {
-                    return Shared.Result.Failure<Guid>(Error.CreateNotFoundError("Staff Appointment Data Not Found"));
-                }
-
-
-                var unit = await _dbContext.Unit.Include(u => u.directorate).Include(u => u.department).FirstOrDefaultAsync(u => u.Id == request.unitId);
+                var unit = await _dbContext.Unit.Include(u => u.directorate).Include(u => u.department)
+                    .FirstOrDefaultAsync(u => u.Id == request.unitId);
 
                 if (unit is null)
                 {
                     return Shared.Result.Failure<Guid>(Error.CreateNotFoundError("Unit Data Not Found"));
                 }
 
-                using (var dbTransaction = await _dbContext.Database.BeginTransactionAsync())
+                using (var dbTransaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken))
                 {
                     try
                     {
-                        // Updating staff request status
-                        staffRequest.status = StaffRequestStatusTypes.posted;
+                        Staff? existingStaff = null;
+
+                        if (request.polymorphicId != null)
+                        {
+                            var staffRequest = await _dbContext.StaffRequest
+                                .Include(r => r.requestFromStaff)
+                                .FirstOrDefaultAsync(r =>
+                                    r.requestType == RegisterationRequestTypes.newRegisteration &&
+                                    r.RequestDetailPolymorphicId == request.polymorphicId);
+
+                            if (staffRequest == null && request.polymorphicId != null)
+                            {
+                                return Shared.Result.Failure<Guid>(Error.CreateNotFoundError("Request Data Not Found"));
+                            }
+                            
+                            // Updating staff request status
+                            staffRequest.status = StaffRequestStatusTypes.posted;
+
+                            existingStaff = await _dbContext.Staff.Include(s => s.currentAppointment)
+                                .FirstOrDefaultAsync(s => s.Id == staffRequest.requestFromStaff.Id);
+                        }
+                        else
+                        {
+                            existingStaff = await _dbContext.Staff.Include(st => st.currentAppointment)
+                                .FirstOrDefaultAsync(st => st.Id == request.staffId);
+                        }
+                        
+                        if (existingStaff is null)
+                        {
+                            return Shared.Result.Failure<Guid>(Error.CreateNotFoundError("Staff Data Not Found"));
+                        }
+
+                        if (existingStaff?.currentAppointment is null)
+                        {
+                            return Shared.Result.Failure<Guid>(
+                                Error.CreateNotFoundError("Staff Appointment Data Not Found"));
+                        }
 
                         // Creating New Posting Data
                         var newPostingData = new StaffPosting
                         {
-                            staffId = staffRequest.requestFromStaff.Id,
+                            staffId = existingStaff.Id,
                             departmentId = request.departmentId,
                             unitId = request.unitId,
                             directorateId = request.directorateId,
@@ -128,7 +139,7 @@ namespace HRM_BACKEND_VSA.Domains.HR_Management.Staff_Posting
                         // Adding Posting Data To History
                         var newStaffPostingHistory = new StaffPostingHistory
                         {
-                            staffId = staffRequest.requestFromStaff.Id,
+                            staffId = existingStaff.Id,
                             departmentId = request.departmentId,
                             unitId = request.unitId,
                             postingDate = request.postingDate,
@@ -141,14 +152,14 @@ namespace HRM_BACKEND_VSA.Domains.HR_Management.Staff_Posting
                         {
                             Subject = "Staff Posting",
                             Body = EmailContracts.generateStaffPostingEmailBodyTemplate(new StaffPostingRecord(
-                            firstName: existingStaff.firstName,
-                            lastName: existingStaff.lastName,
-                            staffType: existingStaff.currentAppointment?.staffType ?? "",
-                            staffId: existingStaff.staffIdentificationNumber,
-                            unitName: unit.unitName,
-                            departmentName: unit.department.departmentName,
-                            directorateName: unit.directorate.directorateName,
-                            notionalDate: existingStaff.currentAppointment.notionalDate
+                                firstName: existingStaff.firstName,
+                                lastName: existingStaff.lastName,
+                                staffType: existingStaff.currentAppointment?.staffType ?? "",
+                                staffId: existingStaff.staffIdentificationNumber,
+                                unitName: unit.unitName,
+                                departmentName: unit.department.departmentName,
+                                directorateName: unit.directorate.directorateName,
+                                notionalDate: existingStaff.currentAppointment.notionalDate
                             )),
                             ToEmail = existingStaff.email,
                             ToName = $"{existingStaff.firstName} {existingStaff.lastName}"
@@ -164,12 +175,10 @@ namespace HRM_BACKEND_VSA.Domains.HR_Management.Staff_Posting
                     }
                     catch (Exception ex)
                     {
-                        await dbTransaction.RollbackAsync();
+                        await dbTransaction.RollbackAsync(cancellationToken);
                         return Shared.Result.Failure<Guid>(Error.BadRequest(ex.Message));
-
                     }
                 }
-
             }
         }
     }
@@ -180,21 +189,22 @@ public class MapNewStaffPostingEndpoint : ICarterModule
     public void AddRoutes(IEndpointRouteBuilder app)
     {
         app.MapPost("api/staff-request/new-posting", async (ISender sender, NewStaffPostingRequest request) =>
-        {
-            var response = await sender.Send(request);
-
-            if (response.IsSuccess)
             {
-                return Results.Ok(response.Value);
-            }
+                var response = await sender.Send(request);
 
-            if (response.IsFailure)
-            {
-                return Results.UnprocessableEntity(response.Error);
-            }
-            return Results.BadRequest();
-        }).WithTags("Staff-Request")
-        .WithGroupName(SwaggerDoc.SwaggerEndpointDefintions.PostingAndTransfer)
+                if (response.IsSuccess)
+                {
+                    return Results.Ok(response.Value);
+                }
+
+                if (response.IsFailure)
+                {
+                    return Results.UnprocessableEntity(response.Error);
+                }
+
+                return Results.BadRequest();
+            }).WithTags("Staff-Request")
+            .WithGroupName(SwaggerDoc.SwaggerEndpointDefintions.PostingAndTransfer)
             ;
     }
 }

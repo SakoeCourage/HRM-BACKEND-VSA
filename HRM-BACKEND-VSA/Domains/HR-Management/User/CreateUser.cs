@@ -20,7 +20,6 @@ namespace HRM_BACKEND_VSA.Domains.HR_Management.User
             public Guid roleId { get; set; }
             public Guid staffId { get; set; }
             public Guid unitId { get; set; }
-            public Guid departmentId { get; set; }
             public string email { get; set; }
 
         }
@@ -45,7 +44,6 @@ namespace HRM_BACKEND_VSA.Domains.HR_Management.User
                             return !exist;
                         }
                     }).WithMessage("User Email Is Already Taken");
-                RuleFor(c => c.departmentId).NotEmpty();
                 RuleFor(c => c.roleId).NotEmpty();
                 RuleFor(c => c.unitId).NotEmpty();
                 RuleFor(c => c.staffId).NotEmpty();
@@ -86,7 +84,6 @@ namespace HRM_BACKEND_VSA.Domains.HR_Management.User
                             {
                                 roleId = request.roleId,
                                 unitId = request.unitId,
-                                departmentId = request.departmentId,
                                 staffId = request.staffId,
                                 createdAt = DateTime.UtcNow,
                                 email = request.email,

@@ -16,8 +16,6 @@ namespace HRM_BACKEND_VSA.Entities
         public virtual Staff.Staff depHeadOfDepartment { get; set; }
         public virtual Directorate directorate { get; set; }
         public virtual ICollection<Unit> units { set; get; }
-        public virtual ICollection<User> users { get; set; }
-
-
+        
     }
 }

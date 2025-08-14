@@ -90,7 +90,7 @@ namespace HRM_BACKEND_VSA.Domains.HR_Management.App_Setup.Grade
                 newGradeEntry.updatedAt = DateTime.UtcNow;
 
                 _dbContext.Add(newGradeEntry);
-                await _dbContext.SaveChangesAsync();
+                await _dbContext.SaveChangesAsync(cancellationToken);
 
                 return Shared.Result.Success(newGradeEntry.Id);
             }

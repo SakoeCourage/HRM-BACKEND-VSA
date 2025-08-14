@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Carter;
 using FluentValidation;
+using HRM_BACKEND_VSA.Contracts;
 using HRM_BACKEND_VSA.Database;
 using HRM_BACKEND_VSA.Domains.HR_Management.StaffRequestHandlers;
 using HRM_BACKEND_VSA.Extensions;
@@ -15,17 +16,21 @@ namespace HRM_BACKEND_VSA.Domains.Staffs.Staff_Bio
 {
     public static class AddStaffBio
     {
-
         public class AddStaffBioRequest : IRequest<Shared.Result<Guid>>
         {
+            public string? title { get; set; } = string.Empty;
             public string firstName { get; set; }
             public string lastName { get; set; }
+
             public string? otherNames { get; set; }
             public Guid specialityId { get; set; }
             public DateOnly dateOfBirth { get; set; }
             public string phone { get; set; }
             public string gender { get; set; }
-            public string SNNITNumber { get; set; } = string.Empty;
+            public string? SNNITNumber { get; set; } = null;
+            public string? ECOWASCardNumber { get; set; } = null;
+            public string GPSAddress { get; set; } = string.Empty;
+            public string staffIdentificationNumber { get; set; } = string.Empty;
             public string email { get; set; }
             public string disability { get; set; }
         }
@@ -43,8 +48,57 @@ namespace HRM_BACKEND_VSA.Domains.Staffs.Staff_Bio
                 RuleFor(c => c.phone).NotEmpty();
                 RuleFor(c => c.gender).NotEmpty();
                 RuleFor(c => c.dateOfBirth).NotEmpty();
-                RuleFor(c => c.phone).NotEmpty();
-                RuleFor(c => c.SNNITNumber).NotEmpty();
+                RuleFor(c => c.phone).NotEmpty()
+                    .MustAsync(async (model, data, cancelationToken) =>
+                    {
+                        if (string.IsNullOrWhiteSpace(data))
+                        {
+                            return true;
+                        }
+
+                        using (var scope = _serviceScopeFactory.CreateScope())
+                        {
+                            var dbContext = scope.ServiceProvider.GetRequiredService<HRMDBContext>();
+                            bool exist = await dbContext
+                                .Staff
+                                .AnyAsync(e => e.phone.ToLower() == data.Trim().ToLower());
+                            return !exist;
+                        }
+                    })
+                    .WithMessage("Phone Number Already Exist");
+                ;
+                RuleFor(c => c.SNNITNumber).NotEmpty()
+                    .MustAsync(async (model, data, cancelationToken) =>
+                    {
+                        using (var scope = _serviceScopeFactory.CreateScope())
+                        {
+                            var dbContext = scope.ServiceProvider.GetRequiredService<HRMDBContext>();
+                            bool exist = await dbContext
+                                .Staff
+                                .AnyAsync(e => e.SNNITNumber.ToLower() == data.Trim().ToLower());
+                            return !exist;
+                        }
+                    })
+                    .WithMessage("SNNIT Number Already Exist");
+                ;
+                RuleFor(c => c.ECOWASCardNumber)
+                    .MustAsync(async (model, data, cancelationToken) =>
+                    {
+                        if (string.IsNullOrWhiteSpace(data))
+                        {
+                            return true;
+                        }
+
+                        using (var scope = _serviceScopeFactory.CreateScope())
+                        {
+                            var dbContext = scope.ServiceProvider.GetRequiredService<HRMDBContext>();
+                            bool exist = await dbContext
+                                .Staff
+                                .AnyAsync(e => e.ECOWASCardNumber.ToLower() == data.Trim().ToLower());
+                            return !exist;
+                        }
+                    })
+                    .WithMessage("ECOWAS Card Number Already Exist");
                 RuleFor(c => c.email)
                     .NotEmpty()
                     .EmailAddress()
@@ -54,8 +108,8 @@ namespace HRM_BACKEND_VSA.Domains.Staffs.Staff_Bio
                         {
                             var dbContext = scope.ServiceProvider.GetRequiredService<HRMDBContext>();
                             bool exist = await dbContext
-                            .Staff
-                            .AnyAsync(e => e.email.ToLower() == email.Trim().ToLower());
+                                .Staff
+                                .AnyAsync(e => e.email.ToLower() == email.Trim().ToLower());
                             return !exist;
                         }
                     })
@@ -71,16 +125,20 @@ namespace HRM_BACKEND_VSA.Domains.Staffs.Staff_Bio
             private readonly Authprovider _authProvider;
             private readonly IMapper _mapper;
 
-            public Handler(HRMDBContext dbContext, IValidator<AddStaffBioRequest> validator, Authprovider authProvider, IMapper mapper)
+            public Handler(HRMDBContext dbContext, IValidator<AddStaffBioRequest> validator, Authprovider authProvider,
+                IMapper mapper)
             {
                 _validator = validator;
                 _dbContext = dbContext;
                 _authProvider = authProvider;
                 _mapper = mapper;
             }
+
             public async Task<Result<Guid>> Handle(AddStaffBioRequest request, CancellationToken cancellationToken)
             {
-                if (request == null) return Shared.Result.Failure<Guid>(new Error(code: "Invalid Request", message: "Invalid Request body"));
+                if (request == null)
+                    return Shared.Result.Failure<Guid>(new Error(code: "Invalid Request",
+                        message: "Invalid Request body"));
 
                 var validationResult = await _validator.ValidateAsync(request);
 
@@ -91,40 +149,49 @@ namespace HRM_BACKEND_VSA.Domains.Staffs.Staff_Bio
 
                 using (var transactions = await _dbContext.Database.BeginTransactionAsync())
                 {
+                    Console.WriteLine($"Ecowas card number as {request.ECOWASCardNumber}");
                     try
                     {
-                        var rndIDNumber = Stringutilities.GeneraterandomStaffNumbers();
+                        var rndIdNumber = Stringutilities.GeneraterandomStaffNumbers();
                         var newStaffEntry = new Entities.Staff.Staff
                         {
-                            specialityId = request.specialityId,
+                            title = request?.title ?? string.Empty,
+                            specialityId = request?.specialityId,
                             firstName = request.firstName,
                             lastName = request.lastName,
                             email = request.email,
                             phone = request.phone,
                             gender = request.gender,
-                            SNNITNumber = request.SNNITNumber,
+                            otherNames = string.IsNullOrWhiteSpace(request?.otherNames)
+                                ? null
+                                : request.otherNames,
+                            SNNITNumber = request?.SNNITNumber ?? null,
+                            ECOWASCardNumber = string.IsNullOrWhiteSpace(request?.ECOWASCardNumber)
+                                ? null
+                                : request.ECOWASCardNumber,
                             disability = request.disability,
-                            dateOfBirth = request.dateOfBirth,
+                            dateOfBirth = request?.dateOfBirth,
                             createdAt = DateTime.UtcNow,
                             updatedAt = DateTime.UtcNow,
-                            isApproved = false,
-                            staffIdentificationNumber = rndIDNumber,
+                            GPSAddress = request?.GPSAddress ?? string.Empty,
+                            isApproved = true,
+                            status = StaffContracts.StaffStatusTypes.active,
+                            staffIdentificationNumber = string.IsNullOrWhiteSpace(request?.staffIdentificationNumber)
+                                ? null
+                                : request.staffIdentificationNumber,
                             password = BCrypt.Net.BCrypt.HashPassword($"{request.firstName}{request.lastName}")
-
                         };
                         _dbContext.Add(newStaffEntry);
-                        var staffBioDataRequest = new StaffBioDataRequest(_dbContext, _authProvider, _mapper);
-                        await staffBioDataRequest.NewStaffRequest(newStaffEntry.Id);
-                        await _dbContext.SaveChangesAsync();
-                        await transactions.CommitAsync();
+                        // var staffBioDataRequest = new StaffBioDataRequest(_dbContext, _authProvider, _mapper);
+                        // await staffBioDataRequest.NewStaffRequest(newStaffEntry.Id);
+                        await _dbContext.SaveChangesAsync(cancellationToken);
+                        await transactions.CommitAsync(cancellationToken);
                         return Shared.Result.Success(newStaffEntry.Id);
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine(ex);
-                        await transactions.RollbackAsync();
+                        await transactions.RollbackAsync(cancellationToken);
                         return Shared.Result.Failure<Guid>(Error.BadRequest(ex.Message));
-
                     }
                 }
             }
@@ -137,17 +204,18 @@ public class MapAddStaffioEndpint : ICarterModule
     public void AddRoutes(IEndpointRouteBuilder app)
     {
         app.MapPost("api/staff",
-            async (AddStaffBioRequest request, ISender sender) =>
-            {
-                var response = await sender.Send(request);
-                if (response.IsFailure)
+                async (AddStaffBioRequest request, ISender sender) =>
                 {
-                    return Results.UnprocessableEntity(response.Error);
+                    var response = await sender.Send(request);
+                    if (response.IsFailure)
+                    {
+                        return Results.UnprocessableEntity(response.Error);
+                    }
+
+                    return Results.Ok(response.Value);
                 }
-                return Results.Ok(response.Value);
-            }
-        ).WithTags("Staff-Bio")
-        .WithGroupName(SwaggerDoc.SwaggerEndpointDefintions.Planning)
+            ).WithTags("Staff-Bio")
+            .WithGroupName(SwaggerDoc.SwaggerEndpointDefintions.Planning)
             ;
     }
 }

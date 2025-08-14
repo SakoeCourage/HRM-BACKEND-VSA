@@ -1,6 +1,7 @@
 ﻿using Carter;
 using FluentValidation;
 using HRM_BACKEND_VSA.Database;
+using HRM_BACKEND_VSA.Extensions;
 using HRM_BACKEND_VSA.Shared;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -69,7 +70,10 @@ namespace HRM_BACKEND_VSA.Domains.HR_Management.App_Setup.Unit
 
                 var departmentHeadExist = await _dbContext.Department.AnyAsync(x => x.Id == request.departmentId);
                 if (departmentHeadExist is false) return Shared.Result.Failure<Guid>(Error.CreateNotFoundError("Department Not Found"));
-
+                
+                var directorateExist = await _dbContext.Directorate.AnyAsync(x => x.Id == request.directorateId);
+                if (directorateExist is false) return Shared.Result.Failure<Guid>(Error.CreateNotFoundError("Directorate Not Found"));
+                
                 var newEntry = new Entities.Unit
                 {
                     createdAt = DateTime.UtcNow,
@@ -110,7 +114,7 @@ public class MapAddUnitEndpoint : ICarterModule
         }).WithTags("Setup-Unit")
               .WithMetadata(new ProducesResponseTypeAttribute(StatusCodes.Status200OK))
               .WithMetadata(new ProducesResponseTypeAttribute(typeof(Error), StatusCodes.Status400BadRequest))
-
+              .WithGroupName(SwaggerDoc.SwaggerEndpointDefintions.Setup)
           ;
     }
 }

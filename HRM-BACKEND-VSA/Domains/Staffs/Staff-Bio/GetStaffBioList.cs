@@ -36,13 +36,12 @@ namespace HRM_BACKEND_VSA.Domains.Staffs.Staff_Bio
                         .WithSearch(request?.search, "staffIdentificationNumber")
                         .WithSort(request?.sort)
                         .Paginate(request?.pageNumber, request?.pageSize);
-
+                
                 var response = await queryBuilder.BuildAsync();
-
+                
                 return Shared.Result.Success(response);
             }
         }
-
     }
 }
 
@@ -52,7 +51,6 @@ public class GetStaffBioListListEndpoint : ICarterModule
     {
         app.MapGet("api/staff/all", async (ISender sender, [FromQuery] int? pageNumber, [FromQuery] int? pageSize, [FromQuery] string? search, [FromQuery] string? sort) =>
         {
-
             var response = await sender.Send(new GetStaffBioListListRequest
             {
                 pageSize = pageSize,
@@ -70,8 +68,6 @@ public class GetStaffBioListListEndpoint : ICarterModule
             {
                 return Results.Ok(response.Value);
             }
-
-
             return Results.BadRequest("Empty Result");
         }).WithMetadata(new ProducesResponseTypeAttribute(typeof(Error), StatusCodes.Status400BadRequest))
           .WithMetadata(new ProducesResponseTypeAttribute(typeof(Paginator.PaginatedData<Staff>), StatusCodes.Status200OK))

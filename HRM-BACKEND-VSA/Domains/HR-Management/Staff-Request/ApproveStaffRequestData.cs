@@ -44,6 +44,7 @@ namespace HRM_BACKEND_VSA.Domains.HR_Management.Staff_Request
 
 
                 var requestRecord = await _dbContext.StaffRequest.FirstOrDefaultAsync(sr => sr.Id == request.id);
+                
                 if (requestRecord is null)
                 {
                     return Shared.Result.Failure<object>(Error.CreateNotFoundError("Staff Request Record Not Found"));
@@ -62,6 +63,7 @@ namespace HRM_BACKEND_VSA.Domains.HR_Management.Staff_Request
                         await service.OnRequestAccepted(requestRecord.RequestDetailPolymorphicId, requestRecord);
                     return Shared.Result.Success<object>(response);
                 }
+                
                 catch (Exception ex)
                 {
                     return Shared.Result.Failure<object>(Error.BadRequest(ex.Message));

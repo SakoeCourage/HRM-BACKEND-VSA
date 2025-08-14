@@ -8,7 +8,6 @@ namespace HRM_BACKEND_VSA.Utilities
         public static void SetHttpContextAccessor(IHttpContextAccessor httpContextAccessor)
         {
             _httpContextAccessor = httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
-
         }
 
         public class PaginatedData<T>
@@ -58,8 +57,7 @@ namespace HRM_BACKEND_VSA.Utilities
             {
                 throw new InvalidOperationException("HttpContextAccessor has not been set. Call SetHttpContextAccessor method before using Paginate.");
             }
-
-
+            
             var totalCount = await source.CountAsync();
             var paginatedData = await source.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToListAsync();
 

@@ -18,7 +18,9 @@ namespace HRM_BACKEND_VSA.Domains.HR_Management.Staff_Appointment
     {
         public class StaffAppointmentRequest : IRequest<Shared.Result<Guid>>
         {
-            public Guid polymorphicId { get; set; }
+            public Guid? polymorphicId { get; set; }
+
+            public Guid? staffId { get; set; }
             public Guid gradeId { get; set; }
             public string appointmentType { get; set; } = String.Empty;
             public string staffType { get; set; } = String.Empty;
@@ -55,7 +57,9 @@ namespace HRM_BACKEND_VSA.Domains.HR_Management.Staff_Appointment
             private readonly IValidator<StaffAppointmentRequest> _validator;
             private readonly MailService _mailService;
             private readonly IMapper _mapper;
-            public Handler(IMapper mapper, MailService mailService, HRMDBContext dbContext, HRMStaffDBContext staffDBContext, IValidator<StaffAppointmentRequest> validator)
+
+            public Handler(IMapper mapper, MailService mailService, HRMDBContext dbContext,
+                HRMStaffDBContext staffDBContext, IValidator<StaffAppointmentRequest> validator)
             {
                 _dbContext = dbContext;
                 _validator = validator;
@@ -66,81 +70,122 @@ namespace HRM_BACKEND_VSA.Domains.HR_Management.Staff_Appointment
 
             public async Task<Result<Guid>> Handle(StaffAppointmentRequest request, CancellationToken cancellationToken)
             {
-
                 var validationResult = await _validator.ValidateAsync(request);
-
+                
+                if(request.polymorphicId == null && request.staffId == null)
+                {
+                    return Shared.Result.Failure<Guid>(Error.BadRequest("Polymorphic Id or Staff Id is required"));
+                }
+                
                 if (!validationResult.IsValid)
                 {
                     return Shared.Result.Failure<Guid>(Error.ValidationError(validationResult));
                 }
 
-                var paymentSourceInitial = PaymentSourceResponseInitials.getGetInitialsFromStaffRequestType(request.paymentSource);
-                if (paymentSourceInitial is null) return Shared.Result.Failure<Guid>(Error.BadRequest("Failed to Process Payment Source"));
+
+                var paymentSourceInitial =
+                    PaymentSourceResponseInitials.getGetInitialsFromStaffRequestType(request.paymentSource);
+                if (paymentSourceInitial is null)
+                    return Shared.Result.Failure<Guid>(Error.BadRequest("Failed to Process Payment Source"));
 
                 var staffType = StaffTypesInitials.getGetInitialsFromStaffRequestType(request.staffType);
-                if (staffType is null) return Shared.Result.Failure<Guid>(Error.BadRequest("Failed to Process Type of Staff"));
+                if (staffType is null)
+                    return Shared.Result.Failure<Guid>(Error.BadRequest("Failed to Process Type of Staff"));
 
                 var currentNumberOfStaff = await _dbContext.Staff.CountAsync();
                 var currentStaffNumberInitials = currentNumberOfStaff > 0 ? currentNumberOfStaff : 1;
                 var staffcspsInitials = $"{staffType}{paymentSourceInitial}";
+                var newStaff = new Staff();
 
-                var newStaffID = Stringutilities.GenerateStaffNumberPerRegistratonCriteria(staffcspsInitials, currentStaffNumberInitials);
+                var newStaffID = Stringutilities.GenerateStaffNumberPerRegistratonCriteria(staffcspsInitials,
+                        currentStaffNumberInitials);
 
-                var staffApplicationData = await _staffDBContext
-                    .ApplicantBioData
-                    .FirstOrDefaultAsync(x => x.applicantId == request.polymorphicId);
 
-                if (staffApplicationData is null)
-                {
-                    return Shared.Result.Failure<Guid>(Error.CreateNotFoundError("Applicant Bio Data Not Found"));
-                }
-
-                var staffRequest = await _dbContext.StaffRequest.FirstOrDefaultAsync(r => r.requestType == RegisterationRequestTypes.newRegisteration && r.RequestDetailPolymorphicId == request.polymorphicId);
-
-                if (staffRequest == null)
-                {
-                    return Shared.Result.Failure<Guid>(Error.CreateNotFoundError("Request Data Not Found"));
-                }
                 using (var transaction = await _dbContext.Database.BeginTransactionAsync())
                 {
-
                     try
                     {
-
-                        // Check if existing staff has been created using same request polymorphic id
-                        var existingStaffData = await _dbContext.Staff.FirstOrDefaultAsync(x => x.email == staffApplicationData.email);
-
-                        if (existingStaffData is not null)
+                        if (request.polymorphicId != null)
                         {
-                            return Shared.Result.Failure<Guid>(Error.BadRequest("Staff record already exist"));
+                            var staffApplicationData = await _staffDBContext
+                                .ApplicantBioData
+                                .FirstOrDefaultAsync(x => x.applicantId == request.polymorphicId);
+
+                            if (staffApplicationData is null)
+                            {
+                                return Shared.Result.Failure<Guid>(
+                                    Error.CreateNotFoundError("Applicant Bio Data Not Found"));
+                            }
+
+                            var staffRequest = await _dbContext.StaffRequest.FirstOrDefaultAsync(r =>
+                                r.requestType == RegisterationRequestTypes.newRegisteration &&
+                                r.RequestDetailPolymorphicId == request.polymorphicId);
+
+                            if (staffRequest == null)
+                            {
+                                return Shared.Result.Failure<Guid>(Error.CreateNotFoundError("Request Data Not Found"));
+                            }
+
+                            staffRequest.status = StaffRequestStatusTypes.appointed;
+                            staffRequest.requestFromStaffId = newStaff.Id;
+                            
+                            var existingStaffData =
+                                await _dbContext.Staff.FirstOrDefaultAsync(x => x.email == staffApplicationData.email);
+
+                            if (existingStaffData is not null)
+                            {
+                                return Shared.Result.Failure<Guid>(Error.BadRequest("Staff record already exist"));
+                            }
+
+                            var _appStaff = new Staff
+                            {
+                                staffIdentificationNumber = newStaffID,
+                                firstName = staffApplicationData.firstName,
+                                lastName = staffApplicationData.surName,
+                                otherNames = staffApplicationData.otherNames,
+                                dateOfBirth = staffApplicationData.dateOfBirth,
+                                phone = staffApplicationData.phoneOne,
+                                gender = staffApplicationData.gender,
+                                SNNITNumber = staffApplicationData?.SNNITNumber,
+                                GPSAddress = staffApplicationData.GPSAddress,
+                                title = staffApplicationData.title,
+                                email = staffApplicationData?.email,
+                                disability = staffApplicationData?.disability,
+                                passportPicture = staffApplicationData?.passportPicture,
+                                ECOWASCardNumber = staffApplicationData.ECOWASCardNumber,
+                                password = BCrypt.Net.BCrypt.HashPassword(staffApplicationData?.firstName),
+                                createdAt = DateTime.UtcNow,
+                                updatedAt = DateTime.UtcNow,
+                                isAlterable = true,
+                                isApproved = true
+                            };
+                            _dbContext.Staff.Add(_appStaff);
+                            newStaff = _appStaff;
+
+                        }
+                        else
+                        {
+                            var staffExist = await _dbContext.Staff.FirstOrDefaultAsync(st => st.Id == request.staffId);
+
+                            if (staffExist is null)
+                            {
+                                return Shared.Result.Failure<Guid>(Error.CreateNotFoundError("Staff Was Not Found"));
+                            }
+
+                            //Staff Has already an appointment created
+                            var staffAppointed =
+                                await _dbContext.StaffAppointment.AnyAsync(st => st.staffId == request.staffId);
+
+                            if (staffAppointed)
+                            {
+                                return Shared.Result.Failure<Guid>(
+                                    Error.BadRequest("Staff appointment was already exist"));
+                            }
+
+                            newStaff = staffExist;
                         }
 
-                        // creating new staff record from staff application data
-                        var newStaff = new Staff
-                        {
-                            staffIdentificationNumber = newStaffID,
-                            firstName = staffApplicationData.firstName,
-                            lastName = staffApplicationData.surName,
-                            otherNames = staffApplicationData.otherNames,
-                            dateOfBirth = staffApplicationData.dateOfBirth,
-                            phone = staffApplicationData.phoneOne,
-                            gender = staffApplicationData.gender,
-                            SNNITNumber = staffApplicationData?.SNNITNumber,
-                            GPSAddress = staffApplicationData.GPSAddress,
-                            title = staffApplicationData.title,
-                            email = staffApplicationData?.email,
-                            disability = staffApplicationData?.disability,
-                            passportPicture = staffApplicationData?.passportPicture,
-                            ECOWASCardNumber = staffApplicationData.ECOWASCardNumber,
-                            password = BCrypt.Net.BCrypt.HashPassword(staffApplicationData?.firstName),
-                            createdAt = DateTime.UtcNow,
-                            updatedAt = DateTime.UtcNow,
-                            isAlterable = true,
-                            isApproved = true
-                        };
-
-                        await _dbContext.Staff.UpdateOrCreate(_dbContext, existingStaffData?.Id, newStaff);
-
+                        
                         //creating first appointmentDetail
                         var firstAppointmentDetail = new StaffAppointment
                         {
@@ -172,20 +217,21 @@ namespace HRM_BACKEND_VSA.Domains.HR_Management.Staff_Appointment
                         };
 
                         // Updating staff request status
-                        staffRequest.status = StaffRequestStatusTypes.appointed;
-                        staffRequest.requestFromStaffId = newStaff.Id;
-
+                        
                         //Update BioDataRequestStatus
-                        _dbContext.StaffAppointment.AddRange(new List<StaffAppointment> { firstAppointmentDetail, currentAppointmentDetail });
+                        _dbContext.StaffAppointment.AddRange(new List<StaffAppointment>
+                            { firstAppointmentDetail, currentAppointmentDetail });
 
                         // creating new staff appointment history record
-                        var newAppointmentHistoryRecord = _mapper.Map<StaffAppointmentHistory>(currentAppointmentDetail);
+                        var newAppointmentHistoryRecord =
+                            _mapper.Map<StaffAppointmentHistory>(currentAppointmentDetail);
 
-                        var staffAppointmentHistory = _dbContext.StaffAppointmentHistory.Add(newAppointmentHistoryRecord);
+                        var staffAppointmentHistory =
+                            _dbContext.StaffAppointmentHistory.Add(newAppointmentHistoryRecord);
 
                         await _dbContext.SaveChangesAsync(cancellationToken);
                         await transaction.CommitAsync(cancellationToken);
-                        return Shared.Result.Success<Guid>(newStaff.Id);
+                        return Shared.Result.Success<Guid>(newAppointmentHistoryRecord.Id);
                     }
                     catch (Exception ex)
                     {
@@ -204,21 +250,22 @@ public class MapNewStaffAppointmentEndpoint : ICarterModule
     public void AddRoutes(IEndpointRouteBuilder app)
     {
         app.MapPost("api/staff-request/new-appointment", async (ISender sender, StaffAppointmentRequest request) =>
-        {
-            var response = await sender.Send(request);
-
-            if (response.IsSuccess)
             {
-                return Results.Ok(response.Value);
-            }
+                var response = await sender.Send(request);
 
-            if (response.IsFailure)
-            {
-                return Results.UnprocessableEntity(response.Error);
-            }
-            return Results.BadRequest();
-        }).WithTags("Staff-Request")
-        .WithGroupName(SwaggerDoc.SwaggerEndpointDefintions.AppoinmentAndSeparation)
+                if (response.IsSuccess)
+                {
+                    return Results.Ok(response.Value);
+                }
+
+                if (response.IsFailure)
+                {
+                    return Results.UnprocessableEntity(response.Error);
+                }
+
+                return Results.BadRequest();
+            }).WithTags("Staff-Request")
+            .WithGroupName(SwaggerDoc.SwaggerEndpointDefintions.AppoinmentAndSeparation)
             ;
     }
 }

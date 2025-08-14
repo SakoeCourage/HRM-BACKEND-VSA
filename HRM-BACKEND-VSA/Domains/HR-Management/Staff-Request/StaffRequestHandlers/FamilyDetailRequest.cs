@@ -209,8 +209,6 @@ namespace HRM_BACKEND_VSA.Domains.HR_Management.StaffRequestHandlers
             {
                 RuleFor(c => c.fathersName).NotEmpty();
                 RuleFor(c => c.mothersName).NotEmpty();
-                RuleFor(c => c.spouseName).NotEmpty();
-                RuleFor(c => c.spousePhoneNumber).NotEmpty();
                 RuleFor(c => c.nextOfKIN).NotEmpty();
                 RuleFor(c => c.nextOfKINPhoneNumber).NotEmpty();
                 RuleFor(c => c.emergencyPerson).NotEmpty();
@@ -252,7 +250,7 @@ namespace HRM_BACKEND_VSA.Domains.HR_Management.StaffRequestHandlers
                 {
                     if (currentDbRecord.isApproved is false)
                     {
-                        return Shared.Result.Failure<StaffFamilyDetail>(Error.BadRequest("You Have An Unprocessed Bank Request"));
+                        return Shared.Result.Failure<StaffFamilyDetail>(Error.BadRequest("You have a pending request"));
                     }
                 }
 
@@ -267,10 +265,10 @@ namespace HRM_BACKEND_VSA.Domains.HR_Management.StaffRequestHandlers
                                  staffId = authStaff.Id,
                                  fathersName = request.fathersName,
                                  mothersName = request.mothersName,
-                                 spouseName = request.spouseName,
+                                 spouseName = request?.spouseName ?? String.Empty,
                                  spousePhoneNumber = request.spousePhoneNumber,
-                                 nextOfKIN = request.nextOfKIN,
-                                 nextOfKINPhoneNumber = request.nextOfKINPhoneNumber,
+                                 nextOfKIN = request?.nextOfKIN ?? String.Empty,
+                                 nextOfKINPhoneNumber = request?.nextOfKINPhoneNumber ?? String.Empty,
                                  emergencyPerson = request.emergencyPerson,
                                  emergencyPersonPhoneNumber = request.emergencyPersonPhoneNumber,
                                  isApproved = false,

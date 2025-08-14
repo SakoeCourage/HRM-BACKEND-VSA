@@ -82,7 +82,7 @@ namespace HRM_BACKEND_VSA.Domains.HR_Management.App_Setup.Grade
                 var affectedRows = await _dbContext.Grade.Where(x => x.Id == request.Id).ExecuteUpdateAsync(setters =>
                     setters.SetProperty(c => c.marketPremium, request.marketPremium)
                     .SetProperty(c => c.updatedAt, DateTime.UtcNow)
-                    .SetProperty(c => c.minimunStep, request.minimunStep)
+                    .SetProperty(c => c.minimumStep, request.minimunStep)
                     .SetProperty(c => c.maximumStep, request.maximumStep)
                     .SetProperty(c => c.marketPremium, request.marketPremium)
                     .SetProperty(c => c.categoryId, request.categoryId)

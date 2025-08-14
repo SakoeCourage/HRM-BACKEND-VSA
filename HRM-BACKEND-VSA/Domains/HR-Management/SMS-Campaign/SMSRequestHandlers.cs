@@ -129,7 +129,8 @@ namespace HRM_BACKEND_VSA.Domains.HR_Management.SMS_Campaign
         public async Task handleOnDepartmentSMSRequest(string departmentId, NewNonFileTemplateSMSDTO request)
         {
 
-            var department = await _dbContext.Department.Include(u => u.users).ThenInclude(s => s.staff).FirstOrDefaultAsync(u => u.Id == Guid.Parse(departmentId));
+            var department = await _dbContext.Department
+                .FirstOrDefaultAsync(u => u.Id == Guid.Parse(departmentId));
             ;
             if (department is null) throw new Exception("Requested Department Not Found");
 
@@ -139,38 +140,39 @@ namespace HRM_BACKEND_VSA.Domains.HR_Management.SMS_Campaign
                 campaingName = request.campaingName,
                 message = request.message,
                 frequency = request.frequency
-
             };
-            var newCampaign = new SMSCampaignHistory
-            {
-                createdAt = DateTime.UtcNow,
-                updatedAt = DateTime.UtcNow,
-                campaignName = request.campaingName,
-                smsTemplateId = request?.smsTemplateId,
-                message = request?.message,
-                receipients = department.users.Count()
-            };
+            
+            // var newCampaign = new SMSCampaignHistory
+            // {
+            //     createdAt = DateTime.UtcNow,
+            //     updatedAt = DateTime.UtcNow,
+            //     campaignName = request.campaingName,
+            //     smsTemplateId = request?.smsTemplateId,
+            //     message = request?.message,
+            //     receipients = department.users.Count()
+            // };
 
-            var newSMSHistory = await _dbContext.SMSCampaignHistory.AddAsync(newCampaign);
-            await _dbContext.SaveChangesAsync();
-
-            var staffList = department.users.Select(user =>
-            {
-                var staffData = user.staff;
-                return new SMSCampaignReceipient
-                {
-                    firstName = staffData.firstName,
-                    lastName = staffData.lastName,
-                    message = request.message,
-                    campaignHistoryId = newCampaign.Id,
-                    status = SMSStatus.successfull,
-                    contact = staffData.phone,
-                    createdAt = DateTime.UtcNow,
-                    updatedAt = DateTime.UtcNow
-                };
-            }).ToList();
-
-            await new SMSExtension(_staffDBContext, _dbContext, _smsService, _mailService).HandleCampaignWithNoTemplateFile(staffList, templateRequest);
+            // var newSMSHistory = await _dbContext.SMSCampaignHistory.AddAsync(newCampaign);
+            // await _dbContext.SaveChangesAsync();
+            //
+            // var staffList = department.users.Select(user =>
+            // {
+            //     var staffData = user.staff;
+            //     return new SMSCampaignReceipient
+            //     {
+            //         firstName = staffData.firstName,
+            //         lastName = staffData.lastName,
+            //         message = request.message,
+            //         campaignHistoryId = newCampaign.Id,
+            //         status = SMSStatus.successfull,
+            //         contact = staffData.phone,
+            //         createdAt = DateTime.UtcNow,
+            //         updatedAt = DateTime.UtcNow
+            //     };
+            // }).ToList();
+            //
+            // await new SMSExtension(_staffDBContext, _dbContext, _smsService, _mailService)
+            //     .HandleCampaignWithNoTemplateFile(staffList, templateRequest);
         }
 
 

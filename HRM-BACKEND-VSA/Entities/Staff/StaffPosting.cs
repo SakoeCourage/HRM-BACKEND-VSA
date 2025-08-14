@@ -13,11 +13,14 @@ namespace HRM_BACKEND_VSA.Entities.Staff
         public Guid? departmentId { get; set; }
         public Guid? unitId { get; set; }
         public DateOnly postingDate { get; set; }
+        
+        public String postingOption { get; set; } = "internal";
         public virtual Staff Staff { get; set; }
         public virtual Unit unit { get; set; }
         public virtual Department department { get; set; }
         public virtual Directorate directorate { get; set; }
+        
         public Boolean isAlterable { get; set; } = false;
-
+        
     }
 }

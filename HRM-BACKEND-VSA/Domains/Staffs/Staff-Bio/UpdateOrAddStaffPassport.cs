@@ -33,19 +33,25 @@ namespace HRM_BACKEND_VSA.Domains.Staffs.Staff_Bio
             private readonly IValidator<UpdateOrAddStaffPassportRequest> _validator;
             private readonly HRMDBContext _dbContext;
             private readonly ImageKit _imageKit;
-            public Handler(HRMDBContext dbContext, IValidator<UpdateOrAddStaffPassportRequest> validator, ImageKit imageKit)
+
+            public Handler(HRMDBContext dbContext, IValidator<UpdateOrAddStaffPassportRequest> validator,
+                ImageKit imageKit)
             {
                 _validator = validator;
                 _dbContext = dbContext;
                 _imageKit = imageKit;
             }
-            public async Task<Shared.Result<string>> Handle(UpdateOrAddStaffPassportRequest request, CancellationToken cancellationToken)
+
+            public async Task<Shared.Result<string>> Handle(UpdateOrAddStaffPassportRequest request,
+                CancellationToken cancellationToken)
             {
                 var validationResponse = _validator.Validate(request);
-                if (validationResponse.IsValid is false) return Shared.Result.Failure<string>(Error.ValidationError(validationResponse));
+                if (validationResponse.IsValid is false)
+                    return Shared.Result.Failure<string>(Error.ValidationError(validationResponse));
 
                 var currentStaff = await _dbContext.Staff.FirstOrDefaultAsync(s => s.Id == request.staffId);
-                if (currentStaff is null) return Shared.Result.Failure<string>(Error.CreateNotFoundError("Staff Not Found"));
+                if (currentStaff is null)
+                    return Shared.Result.Failure<string>(Error.CreateNotFoundError("Staff Not Found"));
 
                 try
                 {
@@ -61,6 +67,7 @@ namespace HRM_BACKEND_VSA.Domains.Staffs.Staff_Bio
                 {
                     return Shared.Result.Failure<string>(Error.BadRequest(ex.Message));
                 }
+
                 return Shared.Result.Failure<string>(Error.BadRequest("Failed Attach Passport Picture"));
             }
         }
@@ -71,32 +78,33 @@ public class MapUpdateOrAddStaffPassportEnpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapPatch("api/staff/{Id}/update-passportpic", async (ISender sender, Guid Id, [FromForm] IFormFile passportPicture) =>
-        {
-            var response = await sender.Send(
-                new UpdateOrAddStaffPassportRequest
+        app.MapPatch("api/staff/{Id}/update-passportpic",
+                async (ISender sender, Guid Id, [FromForm] IFormFile passportPicture) =>
                 {
-                    staffId = Id,
-                    passportPicture = passportPicture
-                }
-                );
+                    var response = await sender.Send(
+                        new UpdateOrAddStaffPassportRequest
+                        {
+                            staffId = Id,
+                            passportPicture = passportPicture
+                        }
+                    );
 
-            if (response.IsFailure)
-            {
-                return Results.UnprocessableEntity(response.Error);
-            }
-            if (response.IsSuccess)
-            {
-                return Results.NoContent();
-            }
+                    if (response.IsFailure)
+                    {
+                        return Results.UnprocessableEntity(response.Error);
+                    }
 
-            return Results.BadRequest();
+                    if (response.IsSuccess)
+                    {
+                        return Results.NoContent();
+                    }
 
-        }).WithTags("Staff-Bio")
-              .WithMetadata(new ProducesResponseTypeAttribute(StatusCodes.Status204NoContent))
-              .WithMetadata(new ProducesResponseTypeAttribute(typeof(Error), StatusCodes.Status400BadRequest))
-              .WithGroupName(SwaggerDoc.SwaggerEndpointDefintions.Planning)
-              ;
+                    return Results.BadRequest();
+                }).DisableAntiforgery()
+            .WithTags("Staff-Bio")
+            .WithMetadata(new ProducesResponseTypeAttribute(StatusCodes.Status204NoContent))
+            .WithMetadata(new ProducesResponseTypeAttribute(typeof(Error), StatusCodes.Status400BadRequest))
+            .WithGroupName(SwaggerDoc.SwaggerEndpointDefintions.Planning)
+            ;
     }
 }
-

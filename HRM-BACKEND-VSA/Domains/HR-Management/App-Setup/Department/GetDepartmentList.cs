@@ -1,4 +1,5 @@
 ﻿using Carter;
+using HRM_BACKEND_VSA.Contracts;
 using HRM_BACKEND_VSA.Database;
 using HRM_BACKEND_VSA.Entities;
 using HRM_BACKEND_VSA.Extensions;
@@ -32,8 +33,6 @@ namespace HRM_BACKEND_VSA.Domains.HR_Management.App_Setup.Department
             public async Task<Result<object>> Handle(GetDepartmentListRequest request, CancellationToken cancellationToken)
             {
                 var query = _dBContext.Department
-                    .Include(dp => dp.headOfDepartment)
-                    .Include(dp => dp.depHeadOfDepartment)
                     .AsQueryable();
 
                 var queryBuilder = new QueryBuilder<Entities.Department>(query)
@@ -41,7 +40,13 @@ namespace HRM_BACKEND_VSA.Domains.HR_Management.App_Setup.Department
                         .WithSort(request?.sort)
                         .Paginate(request?.pageNumber, request?.pageSize);
 
-                var response = await queryBuilder.BuildAsync();
+                var response = await queryBuilder.BuildAsync((entry) =>  new SetupContract.DepartmentListResponseDto
+                {
+                    Id = entry.Id,
+                    createdAt = entry.createdAt,
+                    updatedAt = entry.updatedAt,
+                    departmentName = entry.departmentName
+                });
 
                 return Shared.Result.Success(response);
             }
@@ -77,7 +82,7 @@ public class GetDepartmentListEndpoint : ICarterModule
 
             return Results.BadRequest("Empty Result");
         }).WithMetadata(new ProducesResponseTypeAttribute(typeof(Error), StatusCodes.Status400BadRequest))
-          .WithMetadata(new ProducesResponseTypeAttribute(typeof(Paginator.PaginatedData<Department>), StatusCodes.Status200OK))
+          .WithMetadata(new ProducesResponseTypeAttribute(typeof(Paginator.PaginatedData<SetupContract.DepartmentListResponseDto>), StatusCodes.Status200OK))
           .WithGroupName(SwaggerDoc.SwaggerEndpointDefintions.Setup)
           .WithTags("Setup-Department");
     }

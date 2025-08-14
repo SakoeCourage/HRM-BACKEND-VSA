@@ -76,4 +76,21 @@
         public string requestType { get; set; } = string.Empty;
         public string status { get; set; } = string.Empty;
     }
+
+    public static class StaffPostingOptions
+    {
+        private static readonly Dictionary<string, string> options = new Dictionary<string, string>
+        {
+            {"internal","internal"},
+            {"external", "external"}
+        };
+
+        public static string? parseOption(string? optionName)
+        {
+            string? initial = null;
+            options.TryGetValue(optionName, out initial);
+            return initial;
+        }
+    }
+  
 }

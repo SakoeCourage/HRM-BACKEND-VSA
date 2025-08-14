@@ -56,6 +56,8 @@ namespace HRM_BACKEND_VSA.Database
         public DbSet<StaffPosting> StaffPosting { get; set; }
         public DbSet<StaffPostingHistory> StaffPostingHistory { get; set; }
         public DbSet<Notification> Notification { get; set; }
+        
+        public DbSet<Seperation> Seperation { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -340,11 +342,6 @@ namespace HRM_BACKEND_VSA.Database
                 .WithOne(u => u.user)
                 .HasForeignKey<User>(u => u.staffId)
                 .OnDelete(DeleteBehavior.ClientCascade);
-
-            modelBuilder.Entity<User>()
-                .HasOne(s => s.department)
-                .WithMany(s => s.users)
-                .HasForeignKey(u => u.departmentId);
 
             modelBuilder.Entity<User>()
                 .HasOne(s => s.unit)

@@ -1,6 +1,7 @@
 ﻿using Carter;
 using FluentValidation;
 using HRM_BACKEND_VSA.Database;
+using HRM_BACKEND_VSA.Extensions;
 using HRM_BACKEND_VSA.Shared;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -66,6 +67,7 @@ public class MapConfirmUserEmailEndpoint : ICarterModule
         .WithMetadata(new ProducesResponseTypeAttribute(StatusCodes.Status401Unauthorized))
         .WithMetadata(new ProducesResponseTypeAttribute(typeof(Error), StatusCodes.Status422UnprocessableEntity))
         .WithTags("Authentication-HRM-User")
+        .WithGroupName(SwaggerDoc.SwaggerEndpointDefintions.HRAuthService)
             ;
     }
 }

@@ -1,10 +1,12 @@
 ﻿using Carter;
+using HRM_BACKEND_VSA.Contracts;
 using HRM_BACKEND_VSA.Database;
 using HRM_BACKEND_VSA.Extensions;
 using HRM_BACKEND_VSA.Shared;
 using HRM_BACKEND_VSA.Utilities;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using static HRM_BACKEND_VSA.Contracts.UrlNavigation;
 using static HRM_BACKEND_VSA.Domains.HR_Management.App_Setup.Department.GetUnitFromDepId;
 
@@ -33,14 +35,41 @@ namespace HRM_BACKEND_VSA.Domains.HR_Management.App_Setup.Department
             }
             public async Task<Result<object>> Handle(GetUnitFromDepIdRequest request, CancellationToken cancellationToken)
             {
-                var responseQuery = _dbContext.Unit.Where(u => u.departmentId == request.Id).AsQueryable();
+                var responseQuery = _dbContext.Unit.Where(u => u.departmentId == request.Id).AsQueryable()
+                    .Include(entry=>entry.department)
+                    .Include(entry=>entry.directorate)
+                    ;
 
                 var queryBuilder = new QueryBuilder<Entities.Unit>(responseQuery)
                         .WithSearch(request?.search, "unitName")
                         .WithSort(request?.sort)
                         .Paginate(request?.pageNumber, request?.pageSize);
 
-                var response = await queryBuilder.BuildAsync();
+                var response = await queryBuilder.BuildAsync((entry)=>    new SetupContract.UnitListResponseDTO
+                {
+                    Id = entry.Id,
+                    unitName = entry.unitName,
+                    createdAt = entry.createdAt,
+                    updatedAt = entry.updatedAt,
+                    department = entry?.department is not null
+                        ? new SetupContract.DepartmentListResponseDto
+                        {
+                            Id = entry.department.Id,
+                            departmentName = entry.department.departmentName,
+                            createdAt = entry.department.createdAt,
+                            updatedAt = entry.department.updatedAt
+                        }
+                        : null,
+                    directorate = entry?.directorate is not null
+                        ? new SetupContract.DirectorateListResponseDto
+                        {
+                            Id = entry.directorate.Id,
+                            directorateName = entry.directorate.directorateName,
+                            createdAt = entry.directorate.createdAt,
+                            updatedAt = entry.directorate.updatedAt
+                        }
+                        : null
+                });
 
                 return Shared.Result.Success(response);
             }
@@ -76,7 +105,7 @@ public class MapGetUnitFromDepIdEndpoint : ICarterModule
             }
             return Results.BadRequest("Empty Result");
         }).WithMetadata(new ProducesResponseTypeAttribute(typeof(Error), StatusCodes.Status400BadRequest))
-         .WithMetadata(new ProducesResponseTypeAttribute(typeof(Paginator.PaginatedData<HRM_BACKEND_VSA.Entities.Unit>), StatusCodes.Status200OK))
+         .WithMetadata(new ProducesResponseTypeAttribute(typeof(Paginator.PaginatedData<SetupContract.UnitListResponseDTO>), StatusCodes.Status200OK))
          .WithGroupName(SwaggerDoc.SwaggerEndpointDefintions.Setup)
          .WithTags("Setup-Department");
     }

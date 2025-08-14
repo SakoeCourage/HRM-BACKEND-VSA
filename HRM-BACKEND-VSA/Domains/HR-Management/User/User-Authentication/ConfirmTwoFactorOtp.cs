@@ -2,6 +2,7 @@
 using Carter;
 using FluentValidation;
 using HRM_BACKEND_VSA.Database;
+using HRM_BACKEND_VSA.Extensions;
 using HRM_BACKEND_VSA.Providers;
 using HRM_BACKEND_VSA.Serivices.Mail_Service;
 using HRM_BACKEND_VSA.Services.SMS_Service;
@@ -70,14 +71,45 @@ namespace HRM_BACKEND_VSA.Domains.HR_Management.User.User_Authentication
 
                 if (hasExpired) return Shared.Result.Failure<UserLoginResponse>(Error.BadRequest("OTP Has Expired"));
 
-                var user = await _dbContext.User.Include(u => u.staff).IgnoreAutoIncludes().FirstOrDefaultAsync(u => u.email == hasOTP.email);
+                var user = await _dbContext
+                    .User
+                    .Include(u => u.staff)
+                    .Include(u=>u.role)
+                    .IgnoreAutoIncludes()
+                    .FirstOrDefaultAsync(u => u.email == hasOTP.email);
 
                 if (user is null) return Shared.Result.Failure<UserLoginResponse>(Error.CreateNotFoundError("User Not Found"));
 
                 user.lastSeen = DateTime.UtcNow;
                 await _dbContext.SaveChangesAsync();
 
-                var response = _mapper.Map<UserLoginResponse>(user);
+                var staffLoginResponse = new StaffLoginResponsePartial
+                {
+                    Id = user.staff.Id,
+                    title = user.staff.title,
+                    firstName = user.staff.firstName,
+                    lastName = user.staff.lastName,
+                    otherNames = user.staff.otherNames,
+                    email = user.staff.email,
+                    phoneNumber = user.staff.phone,
+                    staffIdentificationNumber = user.staff.staffIdentificationNumber,
+                    profilePictureUrl = user.staff.staffIdentificationNumber
+                };
+                
+                var response = new UserLoginResponse
+                {
+                    Id = user.Id,
+                    createdAt = user.createdAt,
+                    updatedAt = user.updatedAt,
+                    email = user.email,
+                    emailVerifiedAt = user.emailVerifiedAt,
+                    lastSeen = user.lastSeen,
+                    isAccountActive = user.isAccountActive,
+                    hasResetPassword = user.hasResetPassword,
+                    staff = staffLoginResponse,
+                    role = user.role
+                };
+                
                 response.accessToken = _jwtProvider.GenerateAccessToken(response.Id, AuthorizationDecisionType.HRMUser);
                 await _dbContext.UserHasOTP.Where(x => x.email == hasOTP.email).ExecuteDeleteAsync();
 
@@ -109,6 +141,8 @@ public class MappConfirmTwoFactorOtpEndpoint : ICarterModule
          .WithMetadata(new ProducesResponseTypeAttribute(typeof(UserLoginResponse), StatusCodes.Status200OK))
         .WithMetadata(new ProducesResponseTypeAttribute(typeof(Error), StatusCodes.Status422UnprocessableEntity))
         .WithMetadata(new ProducesResponseTypeAttribute(StatusCodes.Status204NoContent))
-        .WithTags("Authentication-HRM-User");
+        .WithTags("Authentication-HRM-User")
+        .WithGroupName(SwaggerDoc.SwaggerEndpointDefintions.HRAuthService)
+         ;
     }
 }

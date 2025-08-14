@@ -1,11 +1,13 @@
 ﻿using AutoMapper;
 using Carter;
 using FluentValidation;
+using HRM_BACKEND_VSA.Contracts;
 using HRM_BACKEND_VSA.Database;
 using HRM_BACKEND_VSA.Extensions;
 using HRM_BACKEND_VSA.Providers;
 using HRM_BACKEND_VSA.Shared;
 using MediatR;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using static HRM_BACKEND_VSA.Contracts.StaffContracts;
@@ -25,7 +27,6 @@ namespace HRM_BACKEND_VSA.Domains.Staffs.Staff_Auth
         {
             public Validator()
             {
-
                 RuleFor(c => c.staffIdentificationNumber).NotEmpty();
                 RuleFor(c => c.password).NotEmpty();
             }
@@ -54,7 +55,9 @@ namespace HRM_BACKEND_VSA.Domains.Staffs.Staff_Auth
                     return Shared.Result.Failure<StaffLoginResponse>(Error.ValidationError(validationResponse));
                 }
 
-                var staffData = await _dbContext.Staff.FirstOrDefaultAsync(s => s.staffIdentificationNumber == request.staffIdentificationNumber);
+                var staffData = await _dbContext.Staff
+                        .FirstOrDefaultAsync(s => s.staffIdentificationNumber == request.staffIdentificationNumber);
+                
                 if (staffData == null)
                 {
                     return Shared.Result.Failure<StaffLoginResponse>(Error.CreateNotFoundError("Invalid Staff Id Or Password"));
@@ -65,7 +68,51 @@ namespace HRM_BACKEND_VSA.Domains.Staffs.Staff_Auth
                 {
                     return Shared.Result.Failure<StaffLoginResponse>(Error.CreateNotFoundError("Invalid Staff Id Or Password"));
                 }
-                var response = _mapper.Map<StaffLoginResponse>(staffData);
+                
+                var staffPostingData = await _dbContext.StaffPosting
+                    .Include(entry=>entry.directorate)
+                    .Include(entry=>entry.unit)
+                    .Include(entry=>entry.department)
+                    .FirstOrDefaultAsync(pt=>pt.staffId == staffData.Id);
+
+                if (staffPostingData is null)
+                {
+                    return Shared.Result.Failure<StaffLoginResponse>(Error.BadRequest("Staff Posting Data Not Found. Please Contact Administrator"));
+                }
+
+                var response = new StaffLoginResponse
+                {
+                    Id = staffData.Id,
+                    staffIdentificationNumber = staffData.staffIdentificationNumber,
+                    firstName = staffData.firstName,
+                    lastName = staffData.lastName,
+                    otherNames = staffData.otherNames,
+                    gender = staffData.gender,
+                    email = staffData.email,
+                    passportPicture = staffData.passportPicture,
+                    directorate = new SetupContract.DirectorateListResponseDto
+                    {
+                        Id = staffPostingData.unit.directorate.Id,
+                        createdAt = staffPostingData.unit.directorate.createdAt,
+                        updatedAt = staffPostingData.unit.directorate.updatedAt,
+                        directorateName = staffPostingData.unit.directorate.directorateName,
+                    },
+                    unit = new StaffContracts.StaffUnitResponsePartial
+                    {
+                        Id = staffPostingData.unit.Id,
+                        createdAt = staffPostingData.unit.createdAt,
+                        updatedAt = staffPostingData.unit.updatedAt,
+                        unitName = staffPostingData.unit.unitName,
+                    },
+                    department = new SetupContract.DepartmentListResponseDto
+                    {
+                        Id = staffPostingData.department.Id,
+                        createdAt = staffPostingData.department.createdAt,
+                        updatedAt = staffPostingData.department.updatedAt,
+                        departmentName = staffPostingData.department.departmentName,
+                    }
+
+                };
 
                 response.accessToken = _jwtProvider.GenerateAccessToken(staffData.Id, AuthorizationDecisionType.Staff);
 

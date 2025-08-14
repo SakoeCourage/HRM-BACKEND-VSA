@@ -18,6 +18,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using System.Text.Json.Serialization;
 using System.Threading.RateLimiting;
+using HRM_BACKEND_VSA.Middlewares;
 using Microsoft.AspNetCore.RateLimiting;
 
 
@@ -109,12 +110,10 @@ builder.Services.AddHangfireServer();
 
 Paginator.SetHttpContextAccessor(builder.Services.BuildServiceProvider().GetService<IHttpContextAccessor>());
 
-
 builder.Services.Configure<JsonOptions>(options =>
 {
     options.SerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
 });
-
 
 builder.Services.AddSwaggerGen(option => SwaggerDoc.OpenAuthentication(option));
 
@@ -151,7 +150,6 @@ var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
 {
-
 }
 
 app.UseSwagger();
@@ -165,7 +163,9 @@ app.UseSwaggerUI(c =>
         c.SwaggerEndpoint($"/swagger/{definitions.GetValue(null)?.ToString()}/swagger.json",definitions.GetValue(null)?.ToString());
     }
 });
+app.UseAntiforgery();
 app.UseCors(MyAllowSpecificOrigins);
+app.UseMiddleware<JsonExceptionHandlingMiddleware>();
 
 app.UseHttpsRedirection();
 app.MapCarter();

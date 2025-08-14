@@ -22,34 +22,6 @@ namespace HRM_BACKEND_VSA.Domains.HR_Management.User
             public string email { get; set; }
 
         }
-
-        public class Validator : AbstractValidator<UpdateUserRequest>
-        {
-            private readonly IServiceScopeFactory _scopeFactory;
-
-            public Validator(IServiceScopeFactory scopeFactory)
-            {
-                _scopeFactory = scopeFactory;
-            }
-            public Validator()
-            {
-                RuleFor(c => c.email).NotEmpty().EmailAddress()
-                    .MustAsync(async (model, email, cancellationToken) =>
-                    {
-                        using (var scope = _scopeFactory.CreateScope())
-                        {
-                            var dbContext = scope.ServiceProvider.GetRequiredService<HRMDBContext>();
-                            var exist = await dbContext.User.AnyAsync(u => u.email == email && u.Id != model.id, cancellationToken);
-                            return !exist;
-                        }
-                    }).WithMessage("User Email Is Already Taken");
-                RuleFor(c => c.departmentId).NotEmpty();
-                RuleFor(c => c.roleId).NotEmpty();
-                RuleFor(c => c.unitId).NotEmpty();
-                RuleFor(c => c.staffId).NotEmpty();
-
-            }
-        }
     }
 
     public class Validator : AbstractValidator<UpdateUserRequest>
@@ -72,7 +44,6 @@ namespace HRM_BACKEND_VSA.Domains.HR_Management.User
                         return !exist;
                     }
                 }).WithMessage("User Email Is Already Taken");
-            RuleFor(c => c.departmentId).NotEmpty();
             RuleFor(c => c.roleId).NotEmpty();
             RuleFor(c => c.unitId).NotEmpty();
             RuleFor(c => c.staffId).NotEmpty();
@@ -115,7 +86,6 @@ namespace HRM_BACKEND_VSA.Domains.HR_Management.User
                     try
                     {
                         existingUser.roleId = request.roleId;
-                        existingUser.departmentId = request.departmentId;
                         existingUser.staffId = request.staffId;
                         existingUser.updatedAt = DateTime.UtcNow;
                         existingUser.email = request.email;
@@ -155,8 +125,7 @@ public class MapUpdateUserEndPoint : ICarterModule
                 roleId = request.roleId,
                 staffId = request.staffId,
                 email = request.email,
-                unitId = request.unitId,
-                departmentId = request.departmentId
+                unitId = request.unitId
             });
 
             if (response.IsSuccess)

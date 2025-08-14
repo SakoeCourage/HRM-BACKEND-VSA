@@ -1,4 +1,5 @@
 ﻿using Carter;
+using HRM_BACKEND_VSA.Contracts;
 using HRM_BACKEND_VSA.Database;
 using HRM_BACKEND_VSA.Extensions;
 using HRM_BACKEND_VSA.Shared;
@@ -39,8 +40,14 @@ namespace HRM_BACKEND_VSA.Domains.HR_Management.App_Setup.Directorate
                         .WithSort(request?.sort)
                         .Paginate(request?.pageNumber, request?.pageSize);
 
-                var response = await queryBuilder.BuildAsync();
-
+                var response = await queryBuilder.BuildAsync((entry) =>  new SetupContract.DepartmentListResponseDto
+                {
+                    Id = entry.Id,
+                    createdAt = entry.createdAt,
+                    updatedAt = entry.updatedAt,
+                    departmentName = entry.departmentName
+                });
+                
                 return Shared.Result.Success(response);
             }
         }
@@ -76,7 +83,7 @@ public class MapGetDepartmentFromDirectorateIdEndpoint : ICarterModule
             return Results.BadRequest("Empty Result");
         }).WithMetadata(new ProducesResponseTypeAttribute(typeof(Error), StatusCodes.Status400BadRequest))
         .WithGroupName(SwaggerDoc.SwaggerEndpointDefintions.Setup)
-         .WithMetadata(new ProducesResponseTypeAttribute(typeof(Paginator.PaginatedData<HRM_BACKEND_VSA.Entities.Department>), StatusCodes.Status200OK))
+         .WithMetadata(new ProducesResponseTypeAttribute(typeof(Paginator.PaginatedData<SetupContract.DepartmentListResponseDto>), StatusCodes.Status200OK))
          .WithTags("Setup-Directorate");
     }
 }

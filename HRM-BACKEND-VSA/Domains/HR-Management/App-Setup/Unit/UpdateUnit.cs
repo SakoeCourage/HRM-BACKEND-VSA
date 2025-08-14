@@ -1,6 +1,7 @@
 ﻿using Carter;
 using FluentValidation;
 using HRM_BACKEND_VSA.Database;
+using HRM_BACKEND_VSA.Extensions;
 using HRM_BACKEND_VSA.Shared;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -69,8 +70,7 @@ namespace HRM_BACKEND_VSA.Domains.HR_Management.App_Setup.Unit
                 }
                 var departmentHeadExist = await _dbContext.Department.AnyAsync(x => x.Id == request.departmentId);
                 if (departmentHeadExist is false) return Shared.Result.Failure<Guid>(Error.CreateNotFoundError("Department Not Found"));
-
-
+                
                 var affectedRows = await _dbContext.Unit.Where(x => x.Id == request.Id)
                     .ExecuteUpdateAsync(setters =>
                           setters.SetProperty(p => p.updatedAt, DateTime.UtcNow)
@@ -78,7 +78,6 @@ namespace HRM_BACKEND_VSA.Domains.HR_Management.App_Setup.Unit
                           .SetProperty(p => p.departmentId, request.departmentId)
                           .SetProperty(p => p.unitHeadId, request.unitHeadId)
                           .SetProperty(p => p.directorateId, request.directorateId)
-
                     ); ;
                 if (affectedRows == 0) return Shared.Result.Failure<Guid>(Error.CreateNotFoundError("Unit Not Found"));
 
@@ -121,6 +120,8 @@ public class MapUpdateClubEndpoint : ICarterModule
 
         }).WithTags("Setup-Unit")
               .WithMetadata(new ProducesResponseTypeAttribute(typeof(Guid), StatusCodes.Status200OK))
-              .WithMetadata(new ProducesResponseTypeAttribute(typeof(Error), StatusCodes.Status400BadRequest));
+              .WithMetadata(new ProducesResponseTypeAttribute(typeof(Error), StatusCodes.Status400BadRequest))
+              .WithGroupName(SwaggerDoc.SwaggerEndpointDefintions.Setup)
+              ;
     }
 }
